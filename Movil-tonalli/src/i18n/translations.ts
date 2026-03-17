@@ -61,7 +61,7 @@ export const t: Record<Lang, Record<string, string>> = {
 
     // Leaderboard
     "leaderboard.title": "🏆 Ranking Global",
-    "leaderboard.week": "Semana del 10-16 Mar 2025",
+    "leaderboard.week": "Semana del 10-16 Mar 2026",
     "leaderboard.alliChallenges": "Alli desafía:",
     "leaderboard.alliMsg": "¡Supera a María esta semana para ganar 50 XLM extra! Tú puedes lograrlo 💪",
     "leaderboard.you": "Tú",
@@ -91,7 +91,7 @@ export const t: Record<Lang, Record<string, string>> = {
     "profile.logoutConfirm": "Cerrar Sesión",
     "profile.logoutMsg": "¿Estás seguro de que quieres salir?",
     "profile.cancel": "Cancelar",
-    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2025",
+    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2026",
     "profile.poweredBy": "Powered by Stellar Blockchain ⭐",
 
     // Quiz
@@ -283,7 +283,7 @@ export const t: Record<Lang, Record<string, string>> = {
     "profile.logoutConfirm": "Log Out",
     "profile.logoutMsg": "Are you sure you want to log out?",
     "profile.cancel": "Cancel",
-    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2025",
+    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2026",
     "profile.poweredBy": "Powered by Stellar Blockchain ⭐",
 
     // Quiz
@@ -445,7 +445,7 @@ export const t: Record<Lang, Record<string, string>> = {
 
     // Leaderboard
     "leaderboard.title": "🏆 Cemanahuac Tlanextilli",
-    "leaderboard.week": "Semana 10-16 Mar 2025",
+    "leaderboard.week": "Semana 10-16 Mar 2026",
     "leaderboard.alliChallenges": "Alli mitztlanilia:",
     "leaderboard.alliMsg": "¡Xiquinpanauia María ipan ni semana inic tictlanextiz 50 XLM! 💪",
     "leaderboard.you": "Tehuatl",
@@ -475,7 +475,7 @@ export const t: Record<Lang, Record<string, string>> = {
     "profile.logoutConfirm": "Quiza",
     "profile.logoutMsg": "¿Ticnequi tiquizaz?",
     "profile.cancel": "Amo",
-    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2025",
+    "profile.appVersion": "🌅 Tonalli v1.0.0 · Hackathon 2026",
     "profile.poweredBy": "Ica Stellar Blockchain ⭐",
 
     // Quiz

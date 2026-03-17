@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuthStore } from "../../src/store/authStore";
+import { useProgressStore } from "../../src/store/progressStore";
 import { COLORS } from "../../src/constants/colors";
 import { useLanguageStore } from "../../src/store/languageStore";
 
@@ -21,6 +22,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { register, isLoading } = useAuthStore();
+  const resetProgress = useProgressStore((s) => s.reset);
   const { tr } = useLanguageStore();
 
   const handleRegister = async () => {
@@ -33,6 +35,7 @@ export default function RegisterScreen() {
       return;
     }
     try {
+      resetProgress();
       await register(name, email, password);
       router.replace("/(tabs)");
     } catch {
