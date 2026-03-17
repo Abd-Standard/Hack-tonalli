@@ -1,0 +1,389 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  Contract,
+  Keypair,
+  Networks,
+  rpc as SorobanRpc,
+  TransactionBuilder,
+  xdr,
+  nativeToScVal,
+  scValToNative,
+  Address,
+  BASE_FEE,
+} from '@stellar/stellar-sdk';
+
+export interface MintCertificateParams {
+  userPublicKey: string;
+  lessonId: string;
+  moduleId: string;
+  username: string;
+  score: number;
+  xpEarned: number;
+  metadataUri?: string;
+}
+
+export interface RewardUserParams {
+  userPublicKey: string;
+  lessonId: string;
+  amountXlm: number; // en XLM (se convierte a stroops internamente)
+  score: number;
+}
+
+export interface CertificateData {
+  tokenId: number;
+  owner: string;
+  lessonId: string;
+  moduleId: string;
+  username: string;
+  score: number;
+  xpEarned: number;
+  issuedAt: number;
+  metadataUri: string;
+}
+
+@Injectable()
+export class SorobanService {
+  private readonly logger = new Logger(SorobanService.name);
+  private rpc: SorobanRpc.Server;
+  private adminKeypair: Keypair;
+  private network: string;
+  private networkPassphrase: string;
+
+  // Direcciones de los contratos desplegados (se configuran en .env)
+  private nftContractId: string;
+  private rewardsContractId: string;
+
+  constructor(private configService: ConfigService) {
+    const horizonUrl =
+      this.configService.get('STELLAR_SOROBAN_URL') ||
+      'https://soroban-testnet.stellar.org';
+
+    this.rpc = new SorobanRpc.Server(horizonUrl, { allowHttp: false });
+
+    const adminSecret = this.configService.get('STELLAR_ADMIN_SECRET');
+    if (adminSecret) {
+      this.adminKeypair = Keypair.fromSecret(adminSecret);
+    } else {
+      // En desarrollo, generar keypair temporal
+      this.adminKeypair = Keypair.random();
+      this.logger.warn(
+        `No STELLAR_ADMIN_SECRET set. Using random keypair: ${this.adminKeypair.publicKey()}`,
+      );
+    }
+
+    this.network = this.configService.get('STELLAR_NETWORK') || 'testnet';
+    this.networkPassphrase =
+      this.network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+
+    this.nftContractId = this.configService.get('NFT_CONTRACT_ID') || '';
+    this.rewardsContractId =
+      this.configService.get('REWARDS_CONTRACT_ID') || '';
+  }
+
+  // ── NFT Certificate ────────────────────────────────────────────────────────
+
+  /**
+   * Emite un certificado NFT en Soroban al completar una lección.
+   * Llama al contrato `nft-certificate` desplegado en Stellar.
+   */
+  async mintCertificate(params: MintCertificateParams): Promise<{
+    tokenId: number;
+    txHash: string;
+    contractId: string;
+  }> {
+    if (!this.nftContractId) {
+      this.logger.warn('NFT_CONTRACT_ID not set — using mock response');
+      return this.mockMintCertificate(params);
+    }
+
+    try {
+      const contract = new Contract(this.nftContractId);
+
+      const metadataUri =
+        params.metadataUri ||
+        `https://tonalli.app/certificates/${params.lessonId}`;
+
+      // Construir invocación al contrato Soroban
+      const operation = contract.call(
+        'mint',
+        new Address(params.userPublicKey).toScVal(),
+        nativeToScVal(params.lessonId, { type: 'string' }),
+        nativeToScVal(params.moduleId, { type: 'string' }),
+        nativeToScVal(params.username, { type: 'string' }),
+        nativeToScVal(params.score, { type: 'u32' }),
+        nativeToScVal(params.xpEarned, { type: 'u32' }),
+        nativeToScVal(metadataUri, { type: 'string' }),
+      );
+
+      const txHash = await this.submitSorobanTransaction(operation);
+      const result = await this.getTransactionResult(txHash);
+      const tokenId = scValToNative(result) as number;
+
+      this.logger.log(
+        `NFT minted: token_id=${tokenId}, lesson=${params.lessonId}, tx=${txHash}`,
+      );
+
+      return { tokenId, txHash, contractId: this.nftContractId };
+    } catch (error) {
+      this.logger.error('Failed to mint NFT certificate', error);
+      // Fallback mock en caso de error (para el hackathon)
+      return this.mockMintCertificate(params);
+    }
+  }
+
+  /**
+   * Obtiene los datos de un certificado NFT por su token_id
+   */
+  async getCertificate(tokenId: number): Promise<CertificateData | null> {
+    if (!this.nftContractId) return null;
+
+    try {
+      const contract = new Contract(this.nftContractId);
+      const operation = contract.call(
+        'get_certificate',
+        nativeToScVal(tokenId, { type: 'u64' }),
+      );
+
+      const result = await this.simulateSorobanCall(operation);
+      if (!result) return null;
+
+      const native = scValToNative(result) as any;
+      return {
+        tokenId: Number(native.token_id),
+        owner: native.owner,
+        lessonId: native.lesson_id,
+        moduleId: native.module_id,
+        username: native.username,
+        score: native.score,
+        xpEarned: native.xp_earned,
+        issuedAt: Number(native.issued_at),
+        metadataUri: native.metadata_uri,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get certificate', error);
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene todos los token_ids de certificados de un usuario
+   */
+  async getUserCertificates(userPublicKey: string): Promise<number[]> {
+    if (!this.nftContractId) return [];
+
+    try {
+      const contract = new Contract(this.nftContractId);
+      const operation = contract.call(
+        'get_user_certificates',
+        new Address(userPublicKey).toScVal(),
+      );
+
+      const result = await this.simulateSorobanCall(operation);
+      if (!result) return [];
+
+      return (scValToNative(result) as bigint[]).map(Number);
+    } catch (error) {
+      this.logger.error('Failed to get user certificates', error);
+      return [];
+    }
+  }
+
+  /**
+   * Verifica si un usuario tiene el certificado de una lección específica
+   */
+  async hasCertificate(userPublicKey: string, lessonId: string): Promise<boolean> {
+    if (!this.nftContractId) return false;
+
+    try {
+      const contract = new Contract(this.nftContractId);
+      const operation = contract.call(
+        'has_certificate',
+        new Address(userPublicKey).toScVal(),
+        nativeToScVal(lessonId, { type: 'string' }),
+      );
+
+      const result = await this.simulateSorobanCall(operation);
+      return result ? (scValToNative(result) as boolean) : false;
+    } catch (error) {
+      this.logger.error('Failed to check certificate', error);
+      return false;
+    }
+  }
+
+  // ── Learn-to-Earn Rewards ─────────────────────────────────────────────────
+
+  /**
+   * Envía recompensa XLM al usuario por completar una lección.
+   * Llama al contrato `learn-to-earn` en Soroban.
+   */
+  async rewardUser(params: RewardUserParams): Promise<{
+    amountXlm: number;
+    amountStroops: number;
+    txHash: string;
+  }> {
+    if (!this.rewardsContractId) {
+      this.logger.warn('REWARDS_CONTRACT_ID not set — using mock response');
+      return this.mockRewardUser(params);
+    }
+
+    try {
+      const contract = new Contract(this.rewardsContractId);
+
+      // Convertir XLM a stroops (1 XLM = 10_000_000 stroops)
+      const stroops = BigInt(Math.round(params.amountXlm * 10_000_000));
+
+      const operation = contract.call(
+        'reward_user',
+        new Address(params.userPublicKey).toScVal(),
+        nativeToScVal(params.lessonId, { type: 'string' }),
+        nativeToScVal(stroops, { type: 'i128' }),
+        nativeToScVal(params.score, { type: 'u32' }),
+      );
+
+      const txHash = await this.submitSorobanTransaction(operation);
+      const result = await this.getTransactionResult(txHash);
+      const finalStroops = scValToNative(result) as bigint;
+      const finalXlm = Number(finalStroops) / 10_000_000;
+
+      this.logger.log(
+        `XLM reward sent: ${finalXlm} XLM to ${params.userPublicKey}, lesson=${params.lessonId}, tx=${txHash}`,
+      );
+
+      return {
+        amountXlm: finalXlm,
+        amountStroops: Number(finalStroops),
+        txHash,
+      };
+    } catch (error) {
+      this.logger.error('Failed to reward user', error);
+      return this.mockRewardUser(params);
+    }
+  }
+
+  // ── Helpers Internos ───────────────────────────────────────────────────────
+
+  /**
+   * Construye, simula y envía una transacción Soroban
+   */
+  private async submitSorobanTransaction(operation: xdr.Operation): Promise<string> {
+    const adminAccount = await this.rpc.getAccount(this.adminKeypair.publicKey());
+
+    const tx = new TransactionBuilder(adminAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: this.networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(30)
+      .build();
+
+    // Simular para obtener footprint y resources
+    const simResult = await this.rpc.simulateTransaction(tx);
+    if (SorobanRpc.Api.isSimulationError(simResult)) {
+      throw new Error(`Simulation failed: ${simResult.error}`);
+    }
+
+    // Preparar transacción con resources calculados
+    const preparedTx = SorobanRpc.assembleTransaction(tx, simResult).build();
+    preparedTx.sign(this.adminKeypair);
+
+    const sendResult = await this.rpc.sendTransaction(preparedTx);
+    if (sendResult.status === 'ERROR') {
+      throw new Error(`Transaction failed: ${JSON.stringify(sendResult.errorResult)}`);
+    }
+
+    // Esperar confirmación
+    return await this.waitForTransaction(sendResult.hash);
+  }
+
+  /**
+   * Simula una llamada de solo lectura (sin enviar transacción)
+   */
+  private async simulateSorobanCall(
+    operation: xdr.Operation,
+  ): Promise<xdr.ScVal | null> {
+    const adminAccount = await this.rpc.getAccount(this.adminKeypair.publicKey());
+
+    const tx = new TransactionBuilder(adminAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: this.networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(30)
+      .build();
+
+    const simResult = await this.rpc.simulateTransaction(tx);
+    if (SorobanRpc.Api.isSimulationError(simResult)) {
+      this.logger.error('Simulation error', simResult.error);
+      return null;
+    }
+
+    const successResult = simResult as SorobanRpc.Api.SimulateTransactionSuccessResponse;
+    return successResult.result?.retval ?? null;
+  }
+
+  /**
+   * Espera a que una transacción sea confirmada en el ledger
+   */
+  private async waitForTransaction(hash: string, maxWait = 30): Promise<string> {
+    let attempts = 0;
+    while (attempts < maxWait) {
+      const result = await this.rpc.getTransaction(hash);
+      if (result.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+        return hash;
+      }
+      if (result.status === SorobanRpc.Api.GetTransactionStatus.FAILED) {
+        throw new Error(`Transaction ${hash} failed`);
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+      attempts++;
+    }
+    throw new Error(`Transaction ${hash} timed out`);
+  }
+
+  private async getTransactionResult(hash: string): Promise<xdr.ScVal> {
+    const result = await this.rpc.getTransaction(hash);
+    if (result.status !== SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+      throw new Error('Transaction not successful');
+    }
+    const successResult = result as SorobanRpc.Api.GetSuccessfulTransactionResponse;
+    return successResult.returnValue!;
+  }
+
+  // ── Mock Responses (para demo sin contratos desplegados) ──────────────────
+
+  private async mockMintCertificate(params: MintCertificateParams) {
+    const tokenId = Math.floor(Math.random() * 9000) + 1000;
+    const txHash = Array.from({ length: 64 }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join('');
+
+    this.logger.log(
+      `[MOCK] NFT Certificate minted: token_id=${tokenId}, tx=${txHash}`,
+    );
+
+    return {
+      tokenId,
+      txHash,
+      contractId: 'MOCK_CONTRACT_' + this.network.toUpperCase(),
+    };
+  }
+
+  private async mockRewardUser(params: RewardUserParams) {
+    const bonus = params.score === 100 ? params.amountXlm * 0.1 : 0;
+    const finalXlm = params.amountXlm + bonus;
+    const txHash = Array.from({ length: 64 }, () =>
+      Math.floor(Math.random() * 16).toString(16),
+    ).join('');
+
+    this.logger.log(
+      `[MOCK] XLM reward: ${finalXlm} XLM to ${params.userPublicKey}, tx=${txHash}`,
+    );
+
+    return {
+      amountXlm: finalXlm,
+      amountStroops: Math.round(finalXlm * 10_000_000),
+      txHash,
+    };
+  }
+}

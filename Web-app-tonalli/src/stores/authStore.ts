@@ -1,0 +1,59 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { AuthState, User } from '../types';
+import { mockUser, MOCK_MODE } from '../data/mockData';
+import { apiService } from '../services/api';
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+
+      login: async (email: string, password: string) => {
+        set({ isLoading: true });
+        try {
+          if (MOCK_MODE) {
+            await new Promise((r) => setTimeout(r, 800));
+            set({ user: mockUser, token: 'mock-token-123', isAuthenticated: true, isLoading: false });
+            return;
+          }
+          const data = await apiService.login(email, password);
+          set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
+        } catch (err) {
+          set({ isLoading: false });
+          throw err;
+        }
+      },
+
+      register: async (username: string, email: string, password: string, city: string) => {
+        set({ isLoading: true });
+        try {
+          if (MOCK_MODE) {
+            await new Promise((r) => setTimeout(r, 1000));
+            const newUser: User = { ...mockUser, username, email, city, xp: 0, level: 1, streak: 0, xlmEarned: 0, lessonsCompleted: 0, nftCertificates: [] };
+            set({ user: newUser, token: 'mock-token-new', isAuthenticated: true, isLoading: false });
+            return;
+          }
+          const data = await apiService.register(username, email, password, city);
+          set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
+        } catch (err) {
+          set({ isLoading: false });
+          throw err;
+        }
+      },
+
+      logout: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+      },
+
+      setUser: (user: User) => set({ user }),
+    }),
+    {
+      name: 'tonalli-auth',
+      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+    }
+  )
+);
