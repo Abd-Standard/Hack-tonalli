@@ -4,13 +4,16 @@ export interface User {
   email: string;
   level: number;
   xp: number;
+  totalXp?: number;
   streak: number;
   xlmEarned: number;
   lessonsCompleted: number;
   city: string;
   role: 'admin' | 'user';
+  isPremium: boolean;
   walletAddress?: string;
   avatarUrl?: string;
+  character?: string;
   nftCertificates: NFTCertificate[];
 }
 
@@ -25,8 +28,40 @@ export interface Chapter {
   coverImage?: string;
   estimatedMinutes?: number;
   xpReward: number;
+  releaseWeek?: string;
+  modules?: ChapterModuleData[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ChapterModuleData {
+  id: string;
+  type: 'info' | 'video' | 'quiz' | 'final_exam';
+  order: number;
+  title: string;
+  content?: string;
+  videoUrl?: string;
+  hasQuiz: boolean;
+  xpReward: number;
+  unlocked: boolean;
+  completed: boolean;
+  score: number;
+  attempts: number;
+  videoProgress: number;
+  livesRemaining: number; // -1 = unlimited (premium)
+  lockedUntil: string | null;
+}
+
+export interface ChapterWithProgress {
+  id: string;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  moduleTag?: string;
+  xpReward: number;
+  modules: ChapterModuleData[];
+  completionPercent: number;
+  isPremium: boolean;
 }
 
 export interface NFTCertificate {
@@ -37,6 +72,19 @@ export interface NFTCertificate {
   txHash: string;
   earnedAt: string;
   moduleId: string;
+}
+
+export interface ActaCertificateData {
+  id: string;
+  chapterId: string;
+  chapterTitle: string;
+  actaVcId: string;
+  txHash: string;
+  examScore: number;
+  status: 'pending' | 'issued' | 'failed';
+  type: 'official' | 'achievement';
+  issuedAt: string;
+  stellarExplorerUrl?: string;
 }
 
 export interface Lesson {
@@ -74,22 +122,35 @@ export interface Module {
 
 export interface QuizQuestion {
   id: string;
-  lessonId: string;
   question: string;
   options: string[];
-  correctIndex: number;
-  explanation: string;
+  correctIndex?: number;
+  explanation?: string;
 }
 
 export interface LeaderboardEntry {
   rank: number;
   userId: string;
   username: string;
+  displayName?: string;
   city: string;
   xp: number;
-  level: number;
+  level?: number;
   streak: number;
+  character?: string;
+  isPremium?: boolean;
   isCurrentUser?: boolean;
+}
+
+export interface WeeklyLeaderboard {
+  week: string;
+  rewards: { first: number; second: number; third: number };
+  rankings: Array<LeaderboardEntry & {
+    totalScore: number;
+    chaptersCompleted: number;
+    avgExamScore: number;
+    activeDays: number;
+  }>;
 }
 
 export interface AuthState {
@@ -98,7 +159,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, city: string) => Promise<void>;
+  register: (username: string, email: string, password: string, city: string, dateOfBirth?: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
 }

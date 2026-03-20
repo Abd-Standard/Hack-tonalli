@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -19,6 +20,20 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    // Age validation (18+)
+    if (dto.dateOfBirth) {
+      const dob = new Date(dto.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        throw new BadRequestException('Debes ser mayor de 18 años para registrarte en Tonalli');
+      }
+    }
+
     const existingEmail = await this.usersService.findByEmail(dto.email);
     if (existingEmail) throw new ConflictException('Email already registered');
 
@@ -39,6 +54,7 @@ export class AuthService {
       displayName: dto.displayName || dto.username,
       city: dto.city || 'Ciudad de México',
       character: dto.character || 'chima',
+      dateOfBirth: dto.dateOfBirth || undefined,
       stellarPublicKey: stellarKeypair.publicKey,
       stellarSecretKey: stellarKeypair.secretKey,
       xp: 0,
@@ -67,6 +83,7 @@ export class AuthService {
         walletAddress: user.stellarPublicKey,
         character: user.character,
         role: user.role || 'user',
+        isPremium: user.isPremium || false,
       },
     };
   }
@@ -93,6 +110,7 @@ export class AuthService {
         walletAddress: user.stellarPublicKey,
         character: user.character,
         role: user.role || 'user',
+        isPremium: user.isPremium || false,
       },
     };
   }

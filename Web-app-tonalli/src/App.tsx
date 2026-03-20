@@ -11,6 +11,8 @@ import { Profile } from './pages/Profile';
 import { Leaderboard } from './pages/Leaderboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ChaptersPage } from './pages/ChaptersPage';
+import { ChapterFlow } from './pages/ChapterFlow';
+import { CertificatesPage } from './pages/CertificatesPage';
 import { useAuthStore } from './stores/authStore';
 
 const queryClient = new QueryClient({
@@ -68,6 +70,14 @@ export default function App() {
 
           <Route path="/chapters" element={
             <ProtectedRoute><AppLayout><ChaptersPage /></AppLayout></ProtectedRoute>
+          } />
+
+          <Route path="/chapters/:chapterId" element={
+            <ProtectedRoute><AppLayout showNavbar={false}><ChapterFlow /></AppLayout></ProtectedRoute>
+          } />
+
+          <Route path="/certificates" element={
+            <ProtectedRoute><AppLayout><CertificatesPage /></AppLayout></ProtectedRoute>
           } />
 
           <Route path="/learn/:lessonId" element={

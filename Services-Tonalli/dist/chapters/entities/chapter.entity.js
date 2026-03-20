@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Chapter = void 0;
 const typeorm_1 = require("typeorm");
+const chapter_module_entity_1 = require("./chapter-module.entity");
 let Chapter = class Chapter {
     id;
     title;
@@ -22,6 +23,8 @@ let Chapter = class Chapter {
     coverImage;
     estimatedMinutes;
     xpReward;
+    releaseWeek;
+    modules;
     createdAt;
     updatedAt;
 };
@@ -66,6 +69,14 @@ __decorate([
     (0, typeorm_1.Column)({ default: 0 }),
     __metadata("design:type", Number)
 ], Chapter.prototype, "xpReward", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Chapter.prototype, "releaseWeek", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => chapter_module_entity_1.ChapterModule, (m) => m.chapter, { cascade: true }),
+    __metadata("design:type", Array)
+], Chapter.prototype, "modules", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

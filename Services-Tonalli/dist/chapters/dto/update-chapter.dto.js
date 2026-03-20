@@ -11,6 +11,7 @@ class UpdateChapterDto {
     coverImage;
     estimatedMinutes;
     xpReward;
+    releaseWeek;
 }
 exports.UpdateChapterDto = UpdateChapterDto;
 //# sourceMappingURL=update-chapter.dto.js.map

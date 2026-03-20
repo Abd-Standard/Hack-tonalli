@@ -5,4 +5,5 @@ export declare class RegisterDto {
     displayName?: string;
     city?: string;
     character?: string;
+    dateOfBirth?: string;
 }

@@ -10,14 +10,17 @@ exports.ChaptersModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const chapter_entity_1 = require("./entities/chapter.entity");
+const chapter_module_entity_1 = require("./entities/chapter-module.entity");
+const chapter_progress_entity_1 = require("./entities/chapter-progress.entity");
 const chapters_service_1 = require("./chapters.service");
 const chapters_controller_1 = require("./chapters.controller");
+const user_entity_1 = require("../users/entities/user.entity");
 let ChaptersModule = class ChaptersModule {
 };
 exports.ChaptersModule = ChaptersModule;
 exports.ChaptersModule = ChaptersModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([chapter_entity_1.Chapter])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([chapter_entity_1.Chapter, chapter_module_entity_1.ChapterModule, chapter_progress_entity_1.ChapterProgress, user_entity_1.User])],
         controllers: [chapters_controller_1.ChaptersController],
         providers: [chapters_service_1.ChaptersService],
         exports: [chapters_service_1.ChaptersService],

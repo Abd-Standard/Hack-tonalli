@@ -78,6 +78,8 @@ export class UsersService {
       lastActivityDate: user.lastActivityDate,
       walletAddress: user.stellarPublicKey,
       character: user.character,
+      isPremium: user.isPremium || false,
+      subscriptionExpiry: user.subscriptionExpiry,
       createdAt: user.createdAt,
     };
   }

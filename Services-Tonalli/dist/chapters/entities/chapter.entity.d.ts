@@ -1,3 +1,4 @@
+import { ChapterModule } from './chapter-module.entity';
 export declare class Chapter {
     id: string;
     title: string;
@@ -9,6 +10,8 @@ export declare class Chapter {
     coverImage: string;
     estimatedMinutes: number;
     xpReward: number;
+    releaseWeek: string;
+    modules: ChapterModule[];
     createdAt: Date;
     updatedAt: Date;
 }

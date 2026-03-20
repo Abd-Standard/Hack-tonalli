@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, UseGuards, Request,
+  Param, Body, UseGuards, Req,
 } from '@nestjs/common';
 import { ChaptersService } from './chapters.service';
 import { CreateChapterDto } from './dto/create-chapter.dto';
@@ -22,11 +22,81 @@ export class ChaptersController {
     return this.chaptersService.findPublished();
   }
 
-  /** GET /api/chapters/:id — returns a single chapter */
+  /** GET /api/chapters/:id — returns a single chapter with modules */
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.chaptersService.findOne(id);
+  }
+
+  /** GET /api/chapters/:id/progress — chapter with user progress */
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/progress')
+  getChapterWithProgress(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.getChapterWithProgress(id, req.user.id);
+  }
+
+  /** GET /api/chapters/:id/completion — chapter completion status */
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/completion')
+  getChapterCompletion(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.getChapterCompletion(id, req.user.id);
+  }
+
+  // ── Module progress endpoints ────────────────────────────────────────────
+
+  /** POST /api/chapters/modules/:moduleId/complete-info — mark info module done */
+  @UseGuards(JwtAuthGuard)
+  @Post('modules/:moduleId/complete-info')
+  completeInfoModule(@Param('moduleId') moduleId: string, @Req() req: any) {
+    return this.chaptersService.completeInfoModule(moduleId, req.user.id);
+  }
+
+  /** POST /api/chapters/modules/:moduleId/video-progress — update video % */
+  @UseGuards(JwtAuthGuard)
+  @Post('modules/:moduleId/video-progress')
+  updateVideoProgress(
+    @Param('moduleId') moduleId: string,
+    @Body('percent') percent: number,
+    @Req() req: any,
+  ) {
+    return this.chaptersService.updateVideoProgress(moduleId, req.user.id, percent);
+  }
+
+  /** GET /api/chapters/modules/:moduleId/quiz — get quiz questions */
+  @UseGuards(JwtAuthGuard)
+  @Get('modules/:moduleId/quiz')
+  getQuizQuestions(@Param('moduleId') moduleId: string, @Req() req: any) {
+    return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
+  }
+
+  /** POST /api/chapters/modules/:moduleId/quiz/submit — submit quiz answers */
+  @UseGuards(JwtAuthGuard)
+  @Post('modules/:moduleId/quiz/submit')
+  submitQuiz(
+    @Param('moduleId') moduleId: string,
+    @Body('answers') answers: { questionId: string; selectedIndex: number }[],
+    @Req() req: any,
+  ) {
+    return this.chaptersService.submitQuiz(moduleId, req.user.id, answers);
+  }
+
+  /** POST /api/chapters/modules/:moduleId/quiz/abandon — report cheating/abandon */
+  @UseGuards(JwtAuthGuard)
+  @Post('modules/:moduleId/quiz/abandon')
+  reportQuizAbandon(
+    @Param('moduleId') moduleId: string,
+    @Body('reason') reason: string,
+    @Req() req: any,
+  ) {
+    return this.chaptersService.reportQuizAbandon(moduleId, req.user.id, reason || 'tab_switch');
+  }
+
+  /** POST /api/chapters/:id/unlock-exam — Free user unlocks Module 4 */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/unlock-exam')
+  unlockFinalExam(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.unlockFinalExam(id, req.user.id);
   }
 
   // ── Admin only ────────────────────────────────────────────────────────────
@@ -39,7 +109,7 @@ export class ChaptersController {
     return this.chaptersService.findAll();
   }
 
-  /** POST /api/chapters — create new chapter */
+  /** POST /api/chapters — create new chapter (auto-creates 4 modules) */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Post()
@@ -53,6 +123,14 @@ export class ChaptersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateChapterDto) {
     return this.chaptersService.update(id, dto);
+  }
+
+  /** PATCH /api/chapters/modules/:moduleId — update a module (content, questions, video) */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Patch('modules/:moduleId')
+  updateModule(@Param('moduleId') moduleId: string, @Body() data: any) {
+    return this.chaptersService.updateModule(moduleId, data);
   }
 
   /** PATCH /api/chapters/:id/publish — toggle published */

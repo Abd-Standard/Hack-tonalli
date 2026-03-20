@@ -8,4 +8,5 @@ export declare class CreateChapterDto {
     coverImage?: string;
     estimatedMinutes?: number;
     xpReward?: number;
+    releaseWeek?: string;
 }

@@ -10,6 +10,11 @@ import { Progress } from '../progress/entities/progress.entity';
 import { NFTCertificate } from '../progress/entities/nft-certificate.entity';
 import { Streak } from '../users/entities/streak.entity';
 import { Chapter } from '../chapters/entities/chapter.entity';
+import { ChapterModule } from '../chapters/entities/chapter-module.entity';
+import { ChapterProgress } from '../chapters/entities/chapter-progress.entity';
+import { WeeklyScore } from '../podium/entities/weekly-score.entity';
+import { PodiumReward } from '../podium/entities/podium-reward.entity';
+import { ActaCertificate } from '../certificates/entities/acta-certificate.entity';
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -18,7 +23,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
   database: process.env.DB_NAME || 'tonalli',
-  entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak, Chapter],
+  entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak, Chapter, ChapterModule, ChapterProgress, WeeklyScore, PodiumReward, ActaCertificate],
   synchronize: true,
   logging: false,
   charset: 'utf8mb4',
@@ -27,868 +32,319 @@ const AppDataSource = new DataSource({
 const MODULE_ID = 'mod-intro-blockchain';
 const MODULE_NAME = 'Intro a Blockchain';
 
-const LESSON_1_QUESTIONS = [
-  {
-    id: 'l1q1',
-    question: '¿Qué es una blockchain o cadena de bloques?',
-    options: [
-      'Un tipo de red social',
-      'Un registro distribuido e inmutable de transacciones',
-      'Un banco digital centralizado',
-      'Un lenguaje de programación',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Una blockchain es un registro distribuido donde los datos se almacenan en bloques enlazados de forma criptográfica.',
-  },
-  {
-    id: 'l1q2',
-    question: '¿Cuál es una característica principal de la blockchain?',
-    options: [
-      'Es controlada por un solo banco',
-      'Puede ser modificada fácilmente por cualquiera',
-      'Es descentralizada e inmutable',
-      'Solo funciona con internet de alta velocidad',
-    ],
-    correctIndex: 2,
-    explanation:
-      'La descentralización e inmutabilidad son pilares fundamentales: nadie controla los datos y no se pueden alterar.',
-  },
-  {
-    id: 'l1q3',
-    question: '¿Qué significa que la blockchain sea "distribuida"?',
-    options: [
-      'Que está en un solo servidor muy grande',
-      'Que múltiples nodos almacenan copias del registro',
-      'Que se distribuye dinero automáticamente',
-      'Que funciona sin conexión a internet',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Distribuida significa que muchos computadores (nodos) guardan copias del mismo registro simultáneamente.',
-  },
-  {
-    id: 'l1q4',
-    question: '¿Quién inventó Bitcoin, la primera blockchain pública?',
-    options: [
-      'Elon Musk',
-      'Mark Zuckerberg',
-      'Satoshi Nakamoto',
-      'Bill Gates',
-    ],
-    correctIndex: 2,
-    explanation:
-      'Satoshi Nakamoto (identidad desconocida) publicó el whitepaper de Bitcoin en 2008.',
-  },
-  {
-    id: 'l1q5',
-    question: '¿Qué hace que los bloques estén "encadenados"?',
-    options: [
-      'Un cable físico entre servidores',
-      'Cada bloque contiene el hash del bloque anterior',
-      'Un administrador que los enlaza manualmente',
-      'Un contrato legal entre nodos',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Cada bloque incluye el hash criptográfico del bloque anterior, creando una cadena que hace imposible la alteración.',
-  },
-  {
-    id: 'l1q6',
-    question: '¿Qué es un "hash" en el contexto de blockchain?',
-    options: [
-      'Una contraseña de usuario',
-      'Una función matemática que genera una huella digital única',
-      'El nombre del dueño de un bloque',
-      'Un tipo de criptomoneda',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Un hash es el resultado de una función criptográfica que produce una cadena única para cualquier dato.',
-  },
-  {
-    id: 'l1q7',
-    question: '¿Cuál de estas NO es una blockchain conocida?',
-    options: ['Ethereum', 'Stellar', 'Solana', 'MySQL'],
-    correctIndex: 3,
-    explanation:
-      'MySQL es un sistema de base de datos relacional tradicional, no una blockchain.',
-  },
-  {
-    id: 'l1q8',
-    question: '¿Qué son los "smart contracts" (contratos inteligentes)?',
-    options: [
-      'Contratos físicos digitalizados',
-      'Abogados con computadoras',
-      'Código que se ejecuta automáticamente en la blockchain',
-      'Emails con firma electrónica',
-    ],
-    correctIndex: 2,
-    explanation:
-      'Los smart contracts son programas que se ejecutan solos cuando se cumplen condiciones predefinidas.',
-  },
-  {
-    id: 'l1q9',
-    question: '¿Para qué sirve el "consenso" en blockchain?',
-    options: [
-      'Para que todos los nodos estén de acuerdo sobre el estado del registro',
-      'Para elegir al presidente de la red',
-      'Para conectar múltiples blockchains',
-      'Para calcular el precio de las criptomonedas',
-    ],
-    correctIndex: 0,
-    explanation:
-      'El mecanismo de consenso asegura que todos los nodos acuerden cuál es la versión correcta del registro.',
-  },
-  {
-    id: 'l1q10',
-    question: '¿Qué es la "descentralización" en blockchain?',
-    options: [
-      'Que no hay ningún servidor',
-      'Que ninguna entidad única tiene control total',
-      'Que los datos están en la nube de Amazon',
-      'Que solo los gobiernos pueden acceder',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Descentralización significa que el poder y control se distribuyen entre muchos participantes, sin una autoridad central.',
-  },
-  {
-    id: 'l1q11',
-    question: '¿Qué es una "wallet" o billetera crypto?',
-    options: [
-      'Una app para guardar fotos',
-      'Un software que almacena claves para acceder a activos digitales',
-      'Una tarjeta de crédito virtual',
-      'Un banco en línea',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Una wallet guarda tus claves criptográficas privadas que te dan acceso a tus activos en la blockchain.',
-  },
-  {
-    id: 'l1q12',
-    question: '¿Qué ventaja tiene blockchain vs bases de datos tradicionales?',
-    options: [
-      'Es más rápida para consultas',
-      'Es más barata de mantener',
-      'Ofrece transparencia e inmutabilidad sin autoridad central',
-      'Puede almacenar más datos',
-    ],
-    correctIndex: 2,
-    explanation:
-      'La transparencia y la imposibilidad de alterar datos sin consenso son ventajas únicas de blockchain.',
-  },
-  {
-    id: 'l1q13',
-    question: '¿Qué es "Proof of Work" (PoW)?',
-    options: [
-      'Un contrato de trabajo para mineros',
-      'Un mecanismo de consenso que requiere resolver puzzles matemáticos',
-      'Una forma de pago por trabajo freelance',
-      'Un protocolo de seguridad de contraseñas',
-    ],
-    correctIndex: 1,
-    explanation:
-      'PoW es el mecanismo de consenso de Bitcoin donde los mineros compiten resolviendo puzzles matemáticos complejos.',
-  },
-  {
-    id: 'l1q14',
-    question: '¿En qué año se lanzó Bitcoin?',
-    options: ['2004', '2009', '2013', '2017'],
-    correctIndex: 1,
-    explanation:
-      'Bitcoin fue lanzado en enero de 2009, aunque el whitepaper se publicó en octubre de 2008.',
-  },
-  {
-    id: 'l1q15',
-    question: '¿Qué son los "tokens" en blockchain?',
-    options: [
-      'Monedas físicas digitalizadas',
-      'Activos digitales creados sobre una blockchain existente',
-      'Contraseñas de un solo uso',
-      'Servidores de validación',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Los tokens son activos digitales creados usando protocolos de blockchain existentes, como los tokens ERC-20 en Ethereum.',
-  },
+// ── Question pools ─────────────────────────────────────────────────────────────
+
+const BLOCKCHAIN_QUESTIONS = [
+  { id: 'bq1', question: '¿Qué es una blockchain o cadena de bloques?', options: ['Un tipo de red social', 'Un registro distribuido e inmutable de transacciones', 'Un banco digital centralizado', 'Un lenguaje de programación'], correctIndex: 1, explanation: 'Una blockchain es un registro distribuido donde los datos se almacenan en bloques enlazados de forma criptográfica.' },
+  { id: 'bq2', question: '¿Cuál es una característica principal de la blockchain?', options: ['Es controlada por un solo banco', 'Puede ser modificada fácilmente por cualquiera', 'Es descentralizada e inmutable', 'Solo funciona con internet de alta velocidad'], correctIndex: 2, explanation: 'La descentralización e inmutabilidad son pilares fundamentales.' },
+  { id: 'bq3', question: '¿Qué significa que la blockchain sea "distribuida"?', options: ['Que está en un solo servidor muy grande', 'Que múltiples nodos almacenan copias del registro', 'Que se distribuye dinero automáticamente', 'Que funciona sin conexión a internet'], correctIndex: 1, explanation: 'Distribuida significa que muchos computadores (nodos) guardan copias del mismo registro.' },
+  { id: 'bq4', question: '¿Quién inventó Bitcoin, la primera blockchain pública?', options: ['Elon Musk', 'Mark Zuckerberg', 'Satoshi Nakamoto', 'Bill Gates'], correctIndex: 2, explanation: 'Satoshi Nakamoto publicó el whitepaper de Bitcoin en 2008.' },
+  { id: 'bq5', question: '¿Qué hace que los bloques estén "encadenados"?', options: ['Un cable físico entre servidores', 'Cada bloque contiene el hash del bloque anterior', 'Un administrador que los enlaza manualmente', 'Un contrato legal entre nodos'], correctIndex: 1, explanation: 'Cada bloque incluye el hash criptográfico del bloque anterior.' },
+  { id: 'bq6', question: '¿Qué es un "hash" en el contexto de blockchain?', options: ['Una contraseña de usuario', 'Una función matemática que genera una huella digital única', 'El nombre del dueño de un bloque', 'Un tipo de criptomoneda'], correctIndex: 1, explanation: 'Un hash es el resultado de una función criptográfica que produce una cadena única.' },
+  { id: 'bq7', question: '¿Cuál de estas NO es una blockchain conocida?', options: ['Ethereum', 'Stellar', 'Solana', 'MySQL'], correctIndex: 3, explanation: 'MySQL es un sistema de base de datos relacional, no una blockchain.' },
+  { id: 'bq8', question: '¿Qué son los "smart contracts"?', options: ['Contratos físicos digitalizados', 'Abogados con computadoras', 'Código que se ejecuta automáticamente en la blockchain', 'Emails con firma electrónica'], correctIndex: 2, explanation: 'Los smart contracts son programas que se ejecutan solos cuando se cumplen condiciones predefinidas.' },
+  { id: 'bq9', question: '¿Para qué sirve el "consenso" en blockchain?', options: ['Para que todos los nodos estén de acuerdo sobre el estado del registro', 'Para elegir al presidente de la red', 'Para conectar múltiples blockchains', 'Para calcular el precio de las criptomonedas'], correctIndex: 0, explanation: 'El mecanismo de consenso asegura que todos los nodos acuerden cuál es la versión correcta.' },
+  { id: 'bq10', question: '¿Qué es la "descentralización" en blockchain?', options: ['Que no hay ningún servidor', 'Que ninguna entidad única tiene control total', 'Que los datos están en la nube de Amazon', 'Que solo los gobiernos pueden acceder'], correctIndex: 1, explanation: 'Descentralización significa que el poder se distribuye entre muchos participantes.' },
+  { id: 'bq11', question: '¿Qué es una "wallet" o billetera crypto?', options: ['Una app para guardar fotos', 'Un software que almacena claves para acceder a activos digitales', 'Una tarjeta de crédito virtual', 'Un banco en línea'], correctIndex: 1, explanation: 'Una wallet guarda tus claves criptográficas privadas.' },
+  { id: 'bq12', question: '¿Qué ventaja tiene blockchain vs bases de datos tradicionales?', options: ['Es más rápida para consultas', 'Es más barata de mantener', 'Ofrece transparencia e inmutabilidad sin autoridad central', 'Puede almacenar más datos'], correctIndex: 2, explanation: 'La transparencia y la imposibilidad de alterar datos sin consenso son ventajas únicas.' },
+  { id: 'bq13', question: '¿Qué es "Proof of Work" (PoW)?', options: ['Un contrato de trabajo para mineros', 'Un mecanismo de consenso que requiere resolver puzzles matemáticos', 'Una forma de pago por trabajo freelance', 'Un protocolo de seguridad'], correctIndex: 1, explanation: 'PoW es el mecanismo de consenso de Bitcoin.' },
+  { id: 'bq14', question: '¿En qué año se lanzó Bitcoin?', options: ['2004', '2009', '2013', '2017'], correctIndex: 1, explanation: 'Bitcoin fue lanzado en enero de 2009.' },
+  { id: 'bq15', question: '¿Qué son los "tokens" en blockchain?', options: ['Monedas físicas digitalizadas', 'Activos digitales creados sobre una blockchain existente', 'Contraseñas de un solo uso', 'Servidores de validación'], correctIndex: 1, explanation: 'Los tokens son activos digitales creados usando protocolos de blockchain existentes.' },
 ];
 
-const LESSON_2_QUESTIONS = [
-  {
-    id: 'l2q1',
-    question: '¿En qué año fue fundada la red Stellar?',
-    options: ['2009', '2012', '2014', '2018'],
-    correctIndex: 2,
-    explanation:
-      'Stellar fue fundada en 2014 por Jed McCaleb y Joyce Kim, después de que Jed dejara Ripple.',
-  },
-  {
-    id: 'l2q2',
-    question: '¿Cuál es la criptomoneda nativa de Stellar?',
-    options: ['ETH', 'BTC', 'XLM', 'SOL'],
-    correctIndex: 2,
-    explanation:
-      'XLM (Lumen) es la criptomoneda nativa de la red Stellar, usada para pagar comisiones de transacción.',
-  },
-  {
-    id: 'l2q3',
-    question: '¿Cuál es el mecanismo de consenso de Stellar?',
-    options: [
-      'Proof of Work (PoW)',
-      'Proof of Stake (PoS)',
-      'Stellar Consensus Protocol (SCP)',
-      'Delegated Proof of Stake (DPoS)',
-    ],
-    correctIndex: 2,
-    explanation:
-      'Stellar usa el SCP, un protocolo basado en Federated Byzantine Agreement (FBA) que es eficiente y verde.',
-  },
-  {
-    id: 'l2q4',
-    question: '¿Cuánto tiempo tarda aproximadamente una transacción en Stellar?',
-    options: ['10 minutos', '1 hora', '3-5 segundos', '1 día'],
-    correctIndex: 2,
-    explanation:
-      'Stellar confirma transacciones en 3-5 segundos, haciéndola ideal para pagos y remesas.',
-  },
-  {
-    id: 'l2q5',
-    question: '¿Cuál es el costo aproximado de una transacción en Stellar?',
-    options: ['$10 USD', '$1 USD', '$0.01 USD', '$0.0000001 USD'],
-    correctIndex: 3,
-    explanation:
-      'Las comisiones en Stellar son extremadamente bajas, alrededor de 0.00001 XLM (fracciones de centavo).',
-  },
-  {
-    id: 'l2q6',
-    question: '¿Para qué está principalmente diseñada la red Stellar?',
-    options: [
-      'Para crear NFTs de arte digital',
-      'Para pagos internacionales y remesas de bajo costo',
-      'Para videojuegos blockchain',
-      'Para almacenamiento de datos descentralizado',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Stellar fue diseñada para facilitar transferencias de valor entre fronteras de forma rápida y económica.',
-  },
-  {
-    id: 'l2q7',
-    question: '¿Qué es la Stellar Development Foundation (SDF)?',
-    options: [
-      'Un banco central de criptomonedas',
-      'La organización sin fines de lucro que desarrolla y mantiene Stellar',
-      'Un fondo de inversión en cripto',
-      'El gobierno de la blockchain',
-    ],
-    correctIndex: 1,
-    explanation:
-      'La SDF es una organización sin fines de lucro dedicada a desarrollar y promover el protocolo Stellar.',
-  },
-  {
-    id: 'l2q8',
-    question: '¿Qué permite Stellar además de enviar XLM?',
-    options: [
-      'Solo enviar XLM nativo',
-      'Crear y negociar activos personalizados (tokens)',
-      'Minería de datos',
-      'Hosting de sitios web',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Stellar permite crear tokens personalizados que pueden representar cualquier activo: dólares, pesos, acciones, NFTs, etc.',
-  },
-  {
-    id: 'l2q9',
-    question: '¿Qué es una "anchor" (ancla) en el ecosistema Stellar?',
-    options: [
-      'Un tipo de nodo validador',
-      'Una entidad que conecta activos del mundo real con la blockchain',
-      'El elemento más pesado en la blockchain',
-      'Un tipo de wallet fría',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Las anchors son instituciones que emiten tokens respaldados por activos reales (como USD) en la red Stellar.',
-  },
-  {
-    id: 'l2q10',
-    question: '¿Qué es Stellar Horizon?',
-    options: [
-      'El nombre del consenso de Stellar',
-      'La API que permite interactuar con la red Stellar',
-      'El explorador de transacciones',
-      'La wallet oficial de Stellar',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Horizon es la API HTTP de Stellar que actúa como interfaz entre tu aplicación y los nodos del core de Stellar.',
-  },
-  {
-    id: 'l2q11',
-    question: '¿Cuántos XLM se necesitan para activar una cuenta Stellar?',
-    options: ['0 XLM', '1 XLM', '10 XLM', '100 XLM'],
-    correctIndex: 1,
-    explanation:
-      'Se necesita un balance mínimo de 1 XLM (la "reserva base") para activar y mantener una cuenta Stellar.',
-  },
-  {
-    id: 'l2q12',
-    question: '¿Qué es el "Friendbot" de Stellar?',
-    options: [
-      'Un bot de redes sociales de Stellar',
-      'Un servicio que fondea cuentas en la red de pruebas (testnet)',
-      'Un asistente de atención al cliente',
-      'Un validador automático',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Friendbot es un servicio gratuito que fondea cuentas en el testnet de Stellar con 10,000 XLM de prueba.',
-  },
-  {
-    id: 'l2q13',
-    question: '¿Qué son los "Soroban smart contracts"?',
-    options: [
-      'Contratos del gobierno para Stellar',
-      'La plataforma de contratos inteligentes de Stellar',
-      'Tokens NFT de Stellar',
-      'Un tipo de wallet multi-firma',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Soroban es la plataforma de smart contracts de Stellar, escrita en Rust, lanzada en 2024.',
-  },
-  {
-    id: 'l2q14',
-    question: '¿Qué empresa usa Stellar para pagos internacionales?',
-    options: [
-      'PayPal',
-      'MoneyGram (en colaboración con Stellar)',
-      'Visa',
-      'Western Union',
-    ],
-    correctIndex: 1,
-    explanation:
-      'MoneyGram se asoció con Stellar para facilitar pagos internacionales usando USDC en la red Stellar.',
-  },
-  {
-    id: 'l2q15',
-    question: '¿Qué es una "keypair" en Stellar?',
-    options: [
-      'Un par de wallets conectadas',
-      'Un par de llaves: pública (dirección) y privada (secreto)',
-      'Dos transacciones relacionadas',
-      'Un tipo de token especial',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Un keypair es el par de clave pública (tu dirección) y clave privada (tu secreto), esencial para operar en Stellar.',
-  },
+const STELLAR_QUESTIONS = [
+  { id: 'sq1', question: '¿En qué año fue fundada la red Stellar?', options: ['2009', '2012', '2014', '2018'], correctIndex: 2, explanation: 'Stellar fue fundada en 2014 por Jed McCaleb y Joyce Kim.' },
+  { id: 'sq2', question: '¿Cuál es la criptomoneda nativa de Stellar?', options: ['ETH', 'BTC', 'XLM', 'SOL'], correctIndex: 2, explanation: 'XLM (Lumen) es la criptomoneda nativa de Stellar.' },
+  { id: 'sq3', question: '¿Cuál es el mecanismo de consenso de Stellar?', options: ['Proof of Work', 'Proof of Stake', 'Stellar Consensus Protocol (SCP)', 'Delegated PoS'], correctIndex: 2, explanation: 'Stellar usa el SCP, basado en Federated Byzantine Agreement.' },
+  { id: 'sq4', question: '¿Cuánto tarda una transacción en Stellar?', options: ['10 minutos', '1 hora', '3-5 segundos', '1 día'], correctIndex: 2, explanation: 'Stellar confirma transacciones en 3-5 segundos.' },
+  { id: 'sq5', question: '¿Cuál es el costo de una transacción en Stellar?', options: ['$10 USD', '$1 USD', '$0.01 USD', 'Fracciones de centavo'], correctIndex: 3, explanation: 'Las comisiones en Stellar son extremadamente bajas.' },
+  { id: 'sq6', question: '¿Para qué está diseñada Stellar?', options: ['NFTs de arte', 'Pagos internacionales y remesas de bajo costo', 'Videojuegos blockchain', 'Almacenamiento descentralizado'], correctIndex: 1, explanation: 'Stellar facilita transferencias de valor entre fronteras.' },
+  { id: 'sq7', question: '¿Qué es la Stellar Development Foundation?', options: ['Un banco central cripto', 'Organización sin fines de lucro que desarrolla Stellar', 'Un fondo de inversión', 'El gobierno de la blockchain'], correctIndex: 1, explanation: 'La SDF es una organización sin fines de lucro dedicada a Stellar.' },
+  { id: 'sq8', question: '¿Qué permite Stellar además de enviar XLM?', options: ['Solo enviar XLM', 'Crear y negociar activos personalizados (tokens)', 'Minería de datos', 'Hosting de sitios web'], correctIndex: 1, explanation: 'Stellar permite crear tokens que representan cualquier activo.' },
+  { id: 'sq9', question: '¿Qué es una "anchor" en Stellar?', options: ['Un nodo validador', 'Una entidad que conecta activos reales con la blockchain', 'El elemento más pesado', 'Un tipo de wallet fría'], correctIndex: 1, explanation: 'Las anchors emiten tokens respaldados por activos reales.' },
+  { id: 'sq10', question: '¿Qué es Stellar Horizon?', options: ['El nombre del consenso', 'La API para interactuar con Stellar', 'El explorador de transacciones', 'La wallet oficial'], correctIndex: 1, explanation: 'Horizon es la API HTTP de Stellar.' },
+  { id: 'sq11', question: '¿Cuántos XLM se necesitan para activar una cuenta?', options: ['0 XLM', '1 XLM', '10 XLM', '100 XLM'], correctIndex: 1, explanation: 'Se necesita un balance mínimo de 1 XLM.' },
+  { id: 'sq12', question: '¿Qué es el "Friendbot" de Stellar?', options: ['Un bot de redes sociales', 'Un servicio que fondea cuentas en testnet', 'Asistente de atención al cliente', 'Un validador automático'], correctIndex: 1, explanation: 'Friendbot fondea cuentas en el testnet con 10,000 XLM de prueba.' },
+  { id: 'sq13', question: '¿Qué son los "Soroban smart contracts"?', options: ['Contratos del gobierno', 'La plataforma de smart contracts de Stellar', 'Tokens NFT', 'Wallet multi-firma'], correctIndex: 1, explanation: 'Soroban es la plataforma de smart contracts de Stellar, escrita en Rust.' },
+  { id: 'sq14', question: '¿Qué empresa usa Stellar para pagos internacionales?', options: ['PayPal', 'MoneyGram', 'Visa', 'Western Union'], correctIndex: 1, explanation: 'MoneyGram se asoció con Stellar para pagos usando USDC.' },
+  { id: 'sq15', question: '¿Qué es una "keypair" en Stellar?', options: ['Un par de wallets', 'Un par de llaves: pública y privada', 'Dos transacciones relacionadas', 'Un tipo de token'], correctIndex: 1, explanation: 'Un keypair es la clave pública (dirección) y la clave privada (secreto).' },
 ];
 
-const LESSON_3_QUESTIONS = [
-  {
-    id: 'l3q1',
-    question: '¿Qué es una clave pública en una wallet crypto?',
-    options: [
-      'Tu contraseña secreta',
-      'Tu dirección que puedes compartir para recibir fondos',
-      'El PIN de tu tarjeta',
-      'El nombre de usuario de tu exchange',
-    ],
-    correctIndex: 1,
-    explanation:
-      'La clave pública es como tu número de cuenta bancaria: puedes compartirla para recibir pagos.',
-  },
-  {
-    id: 'l3q2',
-    question: '¿Qué NUNCA debes compartir con nadie?',
-    options: [
-      'Tu dirección pública (clave pública)',
-      'Tu nombre de usuario',
-      'Tu clave privada o frase semilla',
-      'El nombre de tu blockchain favorita',
-    ],
-    correctIndex: 2,
-    explanation:
-      'Tu clave privada o frase semilla es el acceso total a tus fondos. Compartirla significa perderlos.',
-  },
-  {
-    id: 'l3q3',
-    question: '¿Qué es una "seed phrase" o frase semilla?',
-    options: [
-      'La contraseña de tu exchange',
-      '12-24 palabras que permiten recuperar tu wallet',
-      'Un código para recibir criptomonedas gratis',
-      'El nombre de tu primer NFT',
-    ],
-    correctIndex: 1,
-    explanation:
-      'La seed phrase es un respaldo mnemónico de tu clave privada. Quién la tenga, tiene acceso a todos tus fondos.',
-  },
-  {
-    id: 'l3q4',
-    question: '¿Qué tipo de wallet es más segura para grandes cantidades?',
-    options: [
-      'Wallet en exchange (custodial)',
-      'Wallet en app del celular (hot wallet)',
-      'Hardware wallet / cold wallet (Ledger, Trezor)',
-      'Wallet en extensión de navegador',
-    ],
-    correctIndex: 2,
-    explanation:
-      'Las hardware wallets guardan tus claves offline, protegiéndolas de ataques en línea.',
-  },
-  {
-    id: 'l3q5',
-    question: '¿Qué es una wallet "custodial"?',
-    options: [
-      'Una wallet donde tú controlas tus claves privadas',
-      'Una wallet donde un tercero (exchange) guarda tus claves',
-      'Una wallet para guardar custodios',
-      'Una wallet sin contraseña',
-    ],
-    correctIndex: 1,
-    explanation:
-      'En una wallet custodial (como en exchanges), el tercero guarda tus claves. "Not your keys, not your coins."',
-  },
-  {
-    id: 'l3q6',
-    question: '¿Qué hace Tonalli con la wallet de sus usuarios?',
-    options: [
-      'No crea wallets, usa exchanges',
-      'Crea automáticamente una wallet Stellar sin que el usuario sepa cripto',
-      'Pide al usuario que compre XLM primero',
-      'Usa la misma wallet para todos los usuarios',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Tonalli crea una wallet Stellar automáticamente al registrarte, fondeada con XLM de testnet para recompensas.',
-  },
-  {
-    id: 'l3q7',
-    question: '¿Cómo se llama la red de pruebas de Stellar?',
-    options: ['Mainnet', 'Devnet', 'Testnet', 'Sandbox'],
-    correctIndex: 2,
-    explanation:
-      'El Testnet de Stellar es una red de pruebas donde puedes experimentar con XLM sin valor real.',
-  },
-  {
-    id: 'l3q8',
-    question: '¿Qué recibes al completar una lección en Tonalli?',
-    options: [
-      'Solo puntos internos de la app',
-      'XP, XLM de recompensa y un NFT certificado en blockchain',
-      'Dinero real en tu cuenta bancaria',
-      'Un diploma en papel',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Tonalli recompensa con XP (gamificación), XLM (cripto real en testnet) y un NFT certificado de la lección.',
-  },
-  {
-    id: 'l3q9',
-    question: '¿Qué es un NFT (Non-Fungible Token)?',
-    options: [
-      'Una criptomoneda como Bitcoin',
-      'Un token único e irrepetible en la blockchain',
-      'Un tipo de contrato inteligente',
-      'Una wallet de múltiples firmas',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Un NFT es un token único y no intercambiable que prueba propiedad o autenticidad de un activo digital.',
-  },
-  {
-    id: 'l3q10',
-    question: '¿Qué datos componen una transacción en Stellar?',
-    options: [
-      'Solo el monto de XLM',
-      'Origen, destino, monto, comisión y firma digital',
-      'Email y contraseña del usuario',
-      'Solo la firma del banco',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Una transacción Stellar incluye cuenta origen, destino, monto, fee y debe ser firmada con la clave privada.',
-  },
-  {
-    id: 'l3q11',
-    question: '¿Qué es "manage_data" en Stellar?',
-    options: [
-      'Una app para gestionar datos personales',
-      'Una operación que guarda datos arbitrarios en una cuenta',
-      'El panel de control de Stellar',
-      'Una forma de eliminar transacciones',
-    ],
-    correctIndex: 1,
-    explanation:
-      'manage_data es una operación de Stellar que permite almacenar hasta 64 bytes de datos en una cuenta, útil para NFTs.',
-  },
-  {
-    id: 'l3q12',
-    question: '¿Qué significa "GABC..." al inicio de una dirección Stellar?',
-    options: [
-      'Que es una cuenta de gobierno',
-      'Es simplemente el formato Base32 de las claves públicas Stellar',
-      'Que la cuenta está verificada',
-      'Que es una cuenta de empresa',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Las claves públicas Stellar comienzan con "G" y están codificadas en Base32. Las claves privadas comienzan con "S".',
-  },
-  {
-    id: 'l3q13',
-    question: '¿Qué es el "Stellar Expert"?',
-    options: [
-      'Un certificado de conocimiento Stellar',
-      'Un explorador de bloques para ver transacciones en Stellar',
-      'Un asesor financiero de cripto',
-      'El wallet oficial de Stellar',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Stellar Expert (stellar.expert) es un explorador de bloques donde puedes ver transacciones, cuentas y activos en Stellar.',
-  },
-  {
-    id: 'l3q14',
-    question: '¿Qué es el "balance mínimo" en una cuenta Stellar?',
-    options: [
-      'El mínimo para hacer una transacción',
-      'La reserva de XLM que siempre debe existir en la cuenta',
-      'El costo de crear la wallet',
-      'El máximo que puedes guardar',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Stellar requiere una reserva base de ~1 XLM que siempre debe permanecer en la cuenta para mantenerla activa.',
-  },
-  {
-    id: 'l3q15',
-    question: '¿Qué personaje de Tonalli es un xoloescuincle?',
-    options: ['Chima', 'Alli', 'Xollo', 'Stella'],
-    correctIndex: 2,
-    explanation:
-      'Xollo es el xoloescuincle (perro sin pelo mexicano) mascota de Tonalli, guía en las lecciones interactivas.',
-  },
+const WALLET_QUESTIONS = [
+  { id: 'wq1', question: '¿Qué es una clave pública en una wallet?', options: ['Tu contraseña secreta', 'Tu dirección para recibir fondos', 'El PIN de tu tarjeta', 'Tu nombre de usuario'], correctIndex: 1, explanation: 'La clave pública es como tu número de cuenta bancaria.' },
+  { id: 'wq2', question: '¿Qué NUNCA debes compartir?', options: ['Tu dirección pública', 'Tu nombre de usuario', 'Tu clave privada o frase semilla', 'Tu blockchain favorita'], correctIndex: 2, explanation: 'Tu clave privada es el acceso total a tus fondos.' },
+  { id: 'wq3', question: '¿Qué es una "seed phrase"?', options: ['Contraseña del exchange', '12-24 palabras para recuperar tu wallet', 'Código para cripto gratis', 'Nombre de tu primer NFT'], correctIndex: 1, explanation: 'La seed phrase es un respaldo mnemónico de tu clave privada.' },
+  { id: 'wq4', question: '¿Qué wallet es más segura para grandes cantidades?', options: ['Wallet en exchange', 'App del celular', 'Hardware wallet (Ledger, Trezor)', 'Extensión de navegador'], correctIndex: 2, explanation: 'Las hardware wallets guardan claves offline.' },
+  { id: 'wq5', question: '¿Qué es una wallet "custodial"?', options: ['Tú controlas tus claves', 'Un tercero guarda tus claves', 'Una wallet para guardar custodios', 'Sin contraseña'], correctIndex: 1, explanation: 'En una wallet custodial, el exchange guarda tus claves.' },
+  { id: 'wq6', question: '¿Qué hace Tonalli con la wallet de sus usuarios?', options: ['No crea wallets', 'Crea automáticamente una wallet Stellar', 'Pide comprar XLM primero', 'Usa la misma wallet para todos'], correctIndex: 1, explanation: 'Tonalli crea una wallet Stellar automáticamente al registrarte.' },
+  { id: 'wq7', question: '¿Cómo se llama la red de pruebas de Stellar?', options: ['Mainnet', 'Devnet', 'Testnet', 'Sandbox'], correctIndex: 2, explanation: 'El Testnet es la red de pruebas de Stellar.' },
+  { id: 'wq8', question: '¿Qué recibes al completar una lección en Tonalli?', options: ['Solo puntos', 'XP, XLM y un NFT certificado', 'Dinero en tu banco', 'Un diploma en papel'], correctIndex: 1, explanation: 'Tonalli recompensa con XP, XLM real y un NFT certificado.' },
+  { id: 'wq9', question: '¿Qué es un NFT?', options: ['Una criptomoneda como Bitcoin', 'Un token único e irrepetible en blockchain', 'Un contrato inteligente', 'Una wallet multi-firma'], correctIndex: 1, explanation: 'Un NFT es un token único que prueba propiedad digital.' },
+  { id: 'wq10', question: '¿Qué datos tiene una transacción en Stellar?', options: ['Solo el monto', 'Origen, destino, monto, comisión y firma digital', 'Email y contraseña', 'Solo la firma del banco'], correctIndex: 1, explanation: 'Una transacción Stellar incluye cuenta origen, destino, monto, fee y firma.' },
+  { id: 'wq11', question: '¿Qué es "manage_data" en Stellar?', options: ['App de datos personales', 'Operación que guarda datos en una cuenta', 'Panel de control', 'Forma de eliminar transacciones'], correctIndex: 1, explanation: 'manage_data permite almacenar hasta 64 bytes de datos en una cuenta.' },
+  { id: 'wq12', question: '¿Qué significa "GABC..." al inicio de una dirección Stellar?', options: ['Cuenta de gobierno', 'Formato Base32 de claves públicas Stellar', 'Cuenta verificada', 'Cuenta de empresa'], correctIndex: 1, explanation: 'Las claves públicas Stellar comienzan con "G" y están en Base32.' },
+  { id: 'wq13', question: '¿Qué es el "Stellar Expert"?', options: ['Un certificado', 'Un explorador de bloques para Stellar', 'Un asesor financiero', 'La wallet oficial'], correctIndex: 1, explanation: 'Stellar Expert es un explorador de bloques.' },
+  { id: 'wq14', question: '¿Qué es el "balance mínimo" en Stellar?', options: ['Mínimo para una transacción', 'Reserva de XLM que siempre debe existir', 'Costo de crear wallet', 'Máximo que puedes guardar'], correctIndex: 1, explanation: 'Stellar requiere una reserva base de ~1 XLM.' },
+  { id: 'wq15', question: '¿Qué personaje de Tonalli es un xoloescuincle?', options: ['Chima', 'Alli', 'Xollo', 'Stella'], correctIndex: 2, explanation: 'Xollo es el xoloescuincle mascota de Tonalli.' },
 ];
+
+// ── Seed function ──────────────────────────────────────────────────────────────
 
 async function seed() {
   console.log('🌱 Starting Tonalli seed...');
 
   await AppDataSource.initialize();
-  const userRepo    = AppDataSource.getRepository(User);
-  const lessonRepo  = AppDataSource.getRepository(Lesson);
-  const quizRepo    = AppDataSource.getRepository(Quiz);
+  const userRepo = AppDataSource.getRepository(User);
+  const lessonRepo = AppDataSource.getRepository(Lesson);
+  const quizRepo = AppDataSource.getRepository(Quiz);
   const chapterRepo = AppDataSource.getRepository(Chapter);
+  const chapterModuleRepo = AppDataSource.getRepository(ChapterModule);
 
-  // ── Seed demo users ────────────────────────────────────────────────────────
+  // ── Users ────────────────────────────────────────────────────────────────────
   const adminEmail = 'admin@tonalli.mx';
-  const userEmail  = 'demo@tonalli.mx';
+  const userEmail = 'demo@tonalli.mx';
 
   const existingAdmin = await userRepo.findOne({ where: { email: adminEmail } });
   if (!existingAdmin) {
-    const adminUser = userRepo.create({
-      email: adminEmail,
-      username: 'TonalliAdmin',
-      displayName: 'Administrador',
-      password: await bcrypt.hash('Admin2024!', 10),
-      city: 'Ciudad de México',
-      role: 'admin',
-      xp: 0,
-      totalXp: 0,
-      currentStreak: 0,
-      stellarPublicKey: 'GADMIN_PUBLIC_KEY',
-      stellarSecretKey: 'SADMIN_SECRET_KEY',
-    });
-    await userRepo.save(adminUser);
+    await userRepo.save(userRepo.create({
+      email: adminEmail, username: 'TonalliAdmin', displayName: 'Administrador',
+      password: await bcrypt.hash('Admin2024!', 10), city: 'Ciudad de México',
+      role: 'admin', xp: 0, totalXp: 0, currentStreak: 0, isPremium: true,
+    }));
     console.log('✅ Admin user created: admin@tonalli.mx / Admin2024!');
   }
 
   const existingUser = await userRepo.findOne({ where: { email: userEmail } });
   if (!existingUser) {
-    const demoUser = userRepo.create({
-      email: userEmail,
-      username: 'CryptoAzteca',
-      displayName: 'Crypto Azteca',
-      password: await bcrypt.hash('Demo2024!', 10),
-      city: 'Guadalajara',
-      role: 'user',
-      xp: 0,
-      totalXp: 0,
-      currentStreak: 0,
-      stellarPublicKey: 'GDEMO_PUBLIC_KEY',
-      stellarSecretKey: 'SDEMO_SECRET_KEY',
-    });
-    await userRepo.save(demoUser);
+    await userRepo.save(userRepo.create({
+      email: userEmail, username: 'CryptoAzteca', displayName: 'Crypto Azteca',
+      password: await bcrypt.hash('Demo2024!', 10), city: 'Guadalajara',
+      role: 'user', xp: 0, totalXp: 0, currentStreak: 0, isPremium: false,
+      dateOfBirth: '2000-05-15',
+    }));
     console.log('✅ Demo user created: demo@tonalli.mx / Demo2024!');
   }
 
-  // ── Seed sample chapter ────────────────────────────────────────────────────
+  // Create a premium demo user
+  const premiumEmail = 'premium@tonalli.mx';
+  const existingPremium = await userRepo.findOne({ where: { email: premiumEmail } });
+  if (!existingPremium) {
+    await userRepo.save(userRepo.create({
+      email: premiumEmail, username: 'PremiumUser', displayName: 'Usuario Premium',
+      password: await bcrypt.hash('Premium2024!', 10), city: 'Monterrey',
+      role: 'user', xp: 500, totalXp: 500, currentStreak: 5, isPremium: true,
+      dateOfBirth: '1995-03-20',
+    }));
+    console.log('✅ Premium user created: premium@tonalli.mx / Premium2024!');
+  }
+
+  // ── Chapters with 4 modules each ────────────────────────────────────────────
+
   const existingChapters = await chapterRepo.count();
   if (existingChapters === 0) {
-    const sampleChapter = chapterRepo.create({
+    // CHAPTER 1: Blockchain
+    const ch1 = await chapterRepo.save(chapterRepo.create({
       title: 'Introducción al Blockchain',
       description: 'Aprende los conceptos fundamentales de la tecnología blockchain y por qué está cambiando el mundo.',
-      content: `¿Qué es el Blockchain?
+      moduleTag: 'blockchain', order: 1, published: true, estimatedMinutes: 15, xpReward: 100,
+      releaseWeek: '2026-W12',
+      content: JSON.stringify({
+        sections: [
+          { title: '¿Qué es una Blockchain?', text: 'Una blockchain es como un libro de contabilidad digital permanente y transparente.', icon: '🔗' },
+          { title: '¿Cómo funciona?', text: 'Los datos se agrupan en bloques enlazados con hashes criptográficos.', icon: '⛓️' },
+          { title: '¿Por qué es revolucionaria?', text: 'No necesita banco ni gobierno. Es descentralizada.', icon: '🌍' },
+          { title: 'Casos de uso', text: 'Bitcoin, Ethereum, Stellar, NFTs, certificados y más.', icon: '💡' },
+        ],
+      }),
+    }));
 
-Una blockchain (cadena de bloques) es un tipo especial de base de datos distribuida. A diferencia de una base de datos tradicional controlada por una sola empresa, la blockchain es mantenida por miles de computadoras alrededor del mundo.
+    // Module 1: Info
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch1.id, type: 'info', order: 1, title: 'Contenido: ¿Qué es Blockchain?',
+      xpReward: 10,
+      content: JSON.stringify({
+        sections: [
+          { title: '¿Qué es una Blockchain?', text: 'Una blockchain (cadena de bloques) es un tipo especial de base de datos distribuida. A diferencia de una base de datos tradicional controlada por una sola empresa, la blockchain es mantenida por miles de computadoras alrededor del mundo.\n\nImagina un cuaderno donde todos pueden escribir, pero nadie puede borrar ni modificar lo que ya se escribió. Así funciona la blockchain.', icon: '🔗' },
+          { title: '¿Cómo funciona?', text: 'Los datos se organizan en "bloques". Cada bloque contiene:\n• Un conjunto de transacciones\n• Una marca de tiempo\n• Un hash del bloque anterior\n\nEsta estructura crea una cadena donde cada bloque depende del anterior, haciendo casi imposible alterar la historia.', icon: '⛓️' },
+          { title: '¿Por qué es importante?', text: 'La blockchain elimina la necesidad de un intermediario (banco, gobierno, empresa) para que dos personas puedan hacer transacciones de forma confiable.\n\nAplicaciones:\n• Pagos internacionales (Stellar)\n• Contratos automáticos (Smart Contracts)\n• Certificados digitales (NFTs)\n• Identidad digital\n• Votaciones transparentes', icon: '🌍' },
+          { title: 'Blockchain en Latinoamérica', text: 'En países como México, Argentina y Venezuela, donde la inflación y la falta de acceso bancario son retos reales, el blockchain ofrece alternativas concretas para la inclusión financiera.\n\nTonalli fue creado para que personas como tú puedan aprender estos conceptos y ganar criptomonedas reales mientras estudian.', icon: '🇲🇽' },
+        ],
+        keyTerms: [
+          { term: 'Bloque', definition: 'Unidad de datos en la cadena' },
+          { term: 'Hash', definition: 'Huella digital única de cada bloque' },
+          { term: 'Nodo', definition: 'Computador que participa en la red' },
+          { term: 'Descentralización', definition: 'Sin autoridad central de control' },
+        ],
+      }),
+    }));
 
-¿Cómo funciona?
+    // Module 2: Video
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch1.id, type: 'video', order: 2, title: 'Video: Blockchain explicado',
+      xpReward: 10, videoUrl: '',
+    }));
 
-Los datos se organizan en "bloques". Cada bloque contiene:
-- Un conjunto de transacciones o información
-- Un timestamp (marca de tiempo)
-- Un hash del bloque anterior
+    // Module 3: Quiz
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch1.id, type: 'quiz', order: 3, title: 'Quiz: Fundamentos de Blockchain',
+      xpReward: 25, passingScore: 80, questionsPerAttempt: 5,
+      questionsPool: JSON.stringify(BLOCKCHAIN_QUESTIONS),
+    }));
 
-Esta estructura crea una cadena donde cada bloque depende del anterior, haciendo casi imposible alterar la historia sin que todo el mundo lo note.
+    // Module 4: Final exam
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch1.id, type: 'final_exam', order: 4, title: 'Examen Final: Blockchain',
+      xpReward: 50, passingScore: 80, questionsPerAttempt: 10,
+      questionsPool: JSON.stringify([...BLOCKCHAIN_QUESTIONS].sort(() => Math.random() - 0.5)),
+    }));
 
-¿Por qué es importante?
+    console.log('✅ Chapter 1 created: Introducción al Blockchain (4 modules)');
 
-La blockchain elimina la necesidad de un intermediario (banco, gobierno, empresa) para que dos personas puedan hacer transacciones de forma confiable. Esto tiene aplicaciones en:
+    // CHAPTER 2: Stellar
+    const ch2 = await chapterRepo.save(chapterRepo.create({
+      title: 'Stellar Network',
+      description: 'Descubre por qué Stellar es la blockchain perfecta para pagos y educación financiera en Latinoamérica.',
+      moduleTag: 'stellar', order: 2, published: true, estimatedMinutes: 15, xpReward: 100,
+      releaseWeek: '2026-W13',
+    }));
 
-• Pagos internacionales (como Stellar)
-• Contratos automáticos (Smart Contracts)
-• Certificados digitales (NFTs)
-• Identidad digital
-• Votaciones transparentes
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch2.id, type: 'info', order: 1, title: 'Contenido: ¿Cómo funciona Stellar?',
+      xpReward: 10,
+      content: JSON.stringify({
+        sections: [
+          { title: '¿Qué es Stellar?', text: 'Stellar es una red blockchain diseñada para mover dinero rápido y barato entre países. Fue creada en 2014 y su moneda nativa es XLM (Lumens).', icon: '⭐' },
+          { title: 'Velocidad y costo', text: 'Mientras Bitcoin tarda 10 minutos y cobra hasta $50, Stellar confirma en 3-5 segundos con comisiones menores a un centavo. Perfecto para remesas.', icon: '⚡' },
+          { title: 'Stellar Consensus Protocol', text: 'Stellar no usa minería (no contamina). Usa un sistema de votación entre nodos de confianza llamado SCP. Es rápido, eficiente y ecológico.', icon: '🤝' },
+          { title: 'Activos y Tokens', text: 'En Stellar puedes crear tokens personalizados: pesos digitales, dólares, acciones, o NFTs de certificados como los de Tonalli.', icon: '🪙' },
+          { title: 'Stellar en el mundo real', text: 'MoneyGram usa Stellar para remesas. Circle emite USDC en Stellar. Bancos latinoamericanos están explorando su uso.', icon: '🌎' },
+        ],
+        keyTerms: [
+          { term: 'XLM', definition: 'Moneda nativa de Stellar' },
+          { term: 'SCP', definition: 'Stellar Consensus Protocol' },
+          { term: 'Anchor', definition: 'Puente entre dinero real y blockchain' },
+          { term: 'Horizon', definition: 'API para interactuar con Stellar' },
+        ],
+      }),
+    }));
 
-Blockchain en Latinoamérica
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch2.id, type: 'video', order: 2, title: 'Video: Stellar en 5 minutos',
+      xpReward: 10, videoUrl: '',
+    }));
 
-En países como México, Argentina y Venezuela, donde la inflación y la falta de acceso bancario son retos reales, el blockchain ofrece alternativas concretas para la inclusión financiera.
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch2.id, type: 'quiz', order: 3, title: 'Quiz: Stellar Network',
+      xpReward: 25, passingScore: 80, questionsPerAttempt: 5,
+      questionsPool: JSON.stringify(STELLAR_QUESTIONS),
+    }));
 
-Tonalli fue creado para que personas como tú puedan aprender estos conceptos y ganar criptomonedas reales mientras estudian.`,
-      moduleTag: 'blockchain',
-      order: 1,
-      published: true,
-      estimatedMinutes: 8,
-      xpReward: 50,
-    });
-    await chapterRepo.save(sampleChapter);
-    console.log('✅ Sample chapter created: Introducción al Blockchain');
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch2.id, type: 'final_exam', order: 4, title: 'Examen Final: Stellar',
+      xpReward: 50, passingScore: 80, questionsPerAttempt: 10,
+      questionsPool: JSON.stringify([...STELLAR_QUESTIONS].sort(() => Math.random() - 0.5)),
+    }));
+
+    console.log('✅ Chapter 2 created: Stellar Network (4 modules)');
+
+    // CHAPTER 3: Wallets y Seguridad
+    const ch3 = await chapterRepo.save(chapterRepo.create({
+      title: 'Wallets y Seguridad',
+      description: 'Aprende cómo funciona tu wallet Stellar y cómo proteger tus activos digitales.',
+      moduleTag: 'wallets', order: 3, published: true, estimatedMinutes: 12, xpReward: 100,
+      releaseWeek: '2026-W14',
+    }));
+
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch3.id, type: 'info', order: 1, title: 'Contenido: Tu primera wallet',
+      xpReward: 10,
+      content: JSON.stringify({
+        sections: [
+          { title: 'Tu wallet ya existe', text: 'Cuando te registraste en Tonalli, creamos automáticamente una wallet Stellar para ti. No necesitas saber nada de cripto para tenerla.', icon: '👛' },
+          { title: 'Clave pública = Tu dirección', text: 'Tu clave pública (empieza con "G") es como tu número de cuenta. Puedes compartirla para recibir XLM.', icon: '🔑' },
+          { title: 'Clave privada = Tu contraseña', text: 'Tu clave privada (empieza con "S") NUNCA se comparte. Tonalli la guarda segura para ti.', icon: '🔒' },
+          { title: 'Tipos de wallets', text: 'Custodial (exchange guarda tus claves), Hot wallet (app en celular), Cold wallet (hardware como Ledger). Para grandes cantidades, usa cold wallet.', icon: '🛡️' },
+          { title: 'Tus recompensas en blockchain', text: 'Cada certificado genera un NFT en Stellar que nadie puede quitarte. Puedes verificarlo en stellar.expert.', icon: '🏆' },
+        ],
+        keyTerms: [
+          { term: 'Clave pública', definition: 'Tu dirección para recibir fondos' },
+          { term: 'Clave privada', definition: 'Tu secreto para autorizar transacciones' },
+          { term: 'NFT', definition: 'Certificado único en blockchain' },
+          { term: 'Testnet', definition: 'Red de pruebas de Stellar' },
+        ],
+      }),
+    }));
+
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch3.id, type: 'video', order: 2, title: 'Video: Seguridad en crypto',
+      xpReward: 10, videoUrl: '',
+    }));
+
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch3.id, type: 'quiz', order: 3, title: 'Quiz: Wallets y Seguridad',
+      xpReward: 25, passingScore: 80, questionsPerAttempt: 5,
+      questionsPool: JSON.stringify(WALLET_QUESTIONS),
+    }));
+
+    await chapterModuleRepo.save(chapterModuleRepo.create({
+      chapterId: ch3.id, type: 'final_exam', order: 4, title: 'Examen Final: Wallets',
+      xpReward: 50, passingScore: 80, questionsPerAttempt: 10,
+      questionsPool: JSON.stringify([...WALLET_QUESTIONS].sort(() => Math.random() - 0.5)),
+    }));
+
+    console.log('✅ Chapter 3 created: Wallets y Seguridad (4 modules)');
+  } else {
+    console.log(`✅ Chapters already exist (${existingChapters} found). Skipping.`);
   }
 
+  // ── Legacy lessons (backward compat) ─────────────────────────────────────────
   const existingLessons = await lessonRepo.count();
-  if (existingLessons > 0) {
-    console.log(`✅ Lessons already seeded (${existingLessons} found). Skipping lessons.`);
-    await AppDataSource.destroy();
-    return;
+  if (existingLessons === 0) {
+    const lesson1 = await lessonRepo.save(lessonRepo.create({
+      title: '¿Qué es Blockchain?', description: 'Fundamentos de blockchain.',
+      moduleId: MODULE_ID, moduleName: MODULE_NAME, order: 1, type: LessonType.READING,
+      xpReward: 50, xlmReward: '0.5', character: 'chima',
+      characterDialogue: '¡Hola! Soy Chima. ¡Bienvenido a tu primera lección!',
+      content: JSON.stringify({ sections: [{ title: 'Blockchain', text: 'Ver capítulo completo para más info.', icon: '🔗' }] }),
+    }));
+    await quizRepo.save(quizRepo.create({ lessonId: lesson1.id, questionsPool: JSON.stringify(BLOCKCHAIN_QUESTIONS), questionsPerAttempt: 10, passingScore: 70 }));
+
+    const lesson2 = await lessonRepo.save(lessonRepo.create({
+      title: '¿Cómo funciona Stellar?', description: 'Stellar y sus ventajas.',
+      moduleId: MODULE_ID, moduleName: MODULE_NAME, order: 2, type: LessonType.READING,
+      xpReward: 50, xlmReward: '0.5', character: 'alli',
+      characterDialogue: '¡Qué onda! Soy Alli. Stellar es mi favorita.',
+      content: JSON.stringify({ sections: [{ title: 'Stellar', text: 'Ver capítulo completo para más info.', icon: '⭐' }] }),
+    }));
+    await quizRepo.save(quizRepo.create({ lessonId: lesson2.id, questionsPool: JSON.stringify(STELLAR_QUESTIONS), questionsPerAttempt: 10, passingScore: 70 }));
+
+    const lesson3 = await lessonRepo.save(lessonRepo.create({
+      title: 'Tu primera wallet', description: 'Cómo funciona tu wallet Stellar.',
+      moduleId: MODULE_ID, moduleName: MODULE_NAME, order: 3, type: LessonType.INTERACTIVE,
+      xpReward: 50, xlmReward: '0.5', character: 'xollo',
+      characterDialogue: '¡Guau! Soy Xollo 🐕 ¡Ya tienes una wallet Stellar!',
+      content: JSON.stringify({ sections: [{ title: 'Wallet', text: 'Ver capítulo completo para más info.', icon: '👛' }] }),
+    }));
+    await quizRepo.save(quizRepo.create({ lessonId: lesson3.id, questionsPool: JSON.stringify(WALLET_QUESTIONS), questionsPerAttempt: 10, passingScore: 70 }));
+
+    console.log('✅ 3 legacy lessons created');
   }
-
-  const lesson1 = lessonRepo.create({
-    title: '¿Qué es Blockchain?',
-    description:
-      'Aprende los fundamentos de la tecnología blockchain y por qué está revolucionando las finanzas.',
-    moduleId: MODULE_ID,
-    moduleName: MODULE_NAME,
-    order: 1,
-    type: LessonType.READING,
-    xpReward: 50,
-    xlmReward: '0.5',
-    character: 'chima',
-    characterDialogue:
-      '¡Hola! Soy Chima. ¡Bienvenido a tu primera lección sobre blockchain! Esta tecnología cambiará el mundo, ¡y tú serás parte del cambio!',
-    content: JSON.stringify({
-      sections: [
-        {
-          title: '¿Qué es una Blockchain?',
-          text: 'Una blockchain (cadena de bloques) es como un libro de contabilidad digital que guarda registros de transacciones de forma permanente y transparente. Imagina un cuaderno donde todos pueden escribir, pero nadie puede borrar ni modificar lo que ya se escribió.',
-          icon: '🔗',
-        },
-        {
-          title: '¿Cómo funciona?',
-          text: 'Los datos se agrupan en "bloques". Cada bloque contiene información y una huella digital (hash) del bloque anterior, formando una cadena. Esto hace que sea prácticamente imposible alterar la información sin que todos lo noten.',
-          icon: '⛓️',
-        },
-        {
-          title: '¿Por qué es revolucionaria?',
-          text: 'No necesita un banco o gobierno que la controle. Es descentralizada: miles de computadores en todo el mundo mantienen copias del registro. Si alguien intenta hacer trampa, todos los demás lo detectan automáticamente.',
-          icon: '🌍',
-        },
-        {
-          title: 'Casos de uso',
-          text: 'Bitcoin usa blockchain para pagos digitales. Ethereum para contratos inteligentes. Stellar para remesas internacionales. Los NFTs para propiedad digital. ¡Y Tonalli para certificar tu aprendizaje!',
-          icon: '💡',
-        },
-      ],
-      keyTerms: [
-        { term: 'Bloque', definition: 'Unidad de datos en la cadena' },
-        {
-          term: 'Hash',
-          definition: 'Huella digital única de cada bloque',
-        },
-        {
-          term: 'Nodo',
-          definition: 'Computador que participa en la red',
-        },
-        {
-          term: 'Descentralización',
-          definition: 'Sin autoridad central de control',
-        },
-      ],
-    }),
-  });
-
-  const saved1 = await lessonRepo.save(lesson1);
-
-  const quiz1 = quizRepo.create({
-    lessonId: saved1.id,
-    questionsPool: JSON.stringify(LESSON_1_QUESTIONS),
-    questionsPerAttempt: 10,
-    passingScore: 70,
-  });
-  await quizRepo.save(quiz1);
-  console.log(`✅ Lesson 1 created: ${saved1.title}`);
-
-  const lesson2 = lessonRepo.create({
-    title: '¿Cómo funciona Stellar?',
-    description:
-      'Descubre por qué Stellar es la blockchain perfecta para pagos y educación financiera en Latinoamérica.',
-    moduleId: MODULE_ID,
-    moduleName: MODULE_NAME,
-    order: 2,
-    type: LessonType.READING,
-    xpReward: 50,
-    xlmReward: '0.5',
-    character: 'alli',
-    characterDialogue:
-      '¡Qué onda! Soy Alli. Stellar es mi favorita: ¡transacciones en 5 segundos y casi gratis! Te voy a explicar todo.',
-    content: JSON.stringify({
-      sections: [
-        {
-          title: '¿Qué es Stellar?',
-          text: 'Stellar es una red blockchain diseñada para mover dinero rápido y barato entre países. Fue creada en 2014 y hoy procesa millones de transacciones. Su moneda nativa se llama XLM (Lumens).',
-          icon: '⭐',
-        },
-        {
-          title: 'Velocidad y costo',
-          text: 'Mientras Bitcoin tarda 10 minutos y cobra hasta $50 de comisión, Stellar confirma transacciones en 3-5 segundos con comisiones de 0.00001 XLM (¡menos de un centavo!). Perfecto para remesas a tu familia.',
-          icon: '⚡',
-        },
-        {
-          title: 'El Protocolo de Consenso Stellar (SCP)',
-          text: 'Stellar no usa minería (no contamina). Usa un sistema de votación entre nodos de confianza llamado SCP. Es rápido, eficiente y ecológico. Todos los nodos llegan a acuerdo en segundos.',
-          icon: '🤝',
-        },
-        {
-          title: 'Activos y Tokens',
-          text: 'En Stellar puedes crear cualquier tipo de activo digital: pesos mexicanos digitales, dólares, acciones, o NFTs de certificados. Tonalli usa esto para emitir tu certificado cuando completas una lección.',
-          icon: '🪙',
-        },
-        {
-          title: 'Stellar en el mundo real',
-          text: 'MoneyGram usa Stellar para remesas. Circle emite USDC en Stellar. Varios bancos latinoamericanos están explorando su uso. ¡La infraestructura del futuro financiero ya está aquí!',
-          icon: '🌎',
-        },
-      ],
-      keyTerms: [
-        { term: 'XLM', definition: 'Moneda nativa de Stellar' },
-        { term: 'SCP', definition: 'Stellar Consensus Protocol' },
-        { term: 'Anchor', definition: 'Puente entre dinero real y blockchain' },
-        {
-          term: 'Horizon',
-          definition: 'API para interactuar con Stellar',
-        },
-      ],
-    }),
-  });
-
-  const saved2 = await lessonRepo.save(lesson2);
-
-  const quiz2 = quizRepo.create({
-    lessonId: saved2.id,
-    questionsPool: JSON.stringify(LESSON_2_QUESTIONS),
-    questionsPerAttempt: 10,
-    passingScore: 70,
-  });
-  await quizRepo.save(quiz2);
-  console.log(`✅ Lesson 2 created: ${saved2.title}`);
-
-  const lesson3 = lessonRepo.create({
-    title: 'Tu primera wallet',
-    description:
-      'Aprende cómo funciona tu wallet Stellar en Tonalli y qué significa tener activos digitales reales.',
-    moduleId: MODULE_ID,
-    moduleName: MODULE_NAME,
-    order: 3,
-    type: LessonType.INTERACTIVE,
-    xpReward: 50,
-    xlmReward: '0.5',
-    character: 'xollo',
-    characterDialogue:
-      '¡Guau! Soy Xollo 🐕 ¡Ya tienes una wallet Stellar real! Cuando te registraste en Tonalli, creamos una automáticamente para ti. ¡Aprende cómo usarla!',
-    content: JSON.stringify({
-      sections: [
-        {
-          title: 'Tu wallet ya existe',
-          text: 'Cuando te registraste en Tonalli, creamos automáticamente una wallet Stellar para ti. No necesitas saber nada de cripto para tenerla. ¡Ya eres parte de la blockchain!',
-          icon: '👛',
-          interactive: true,
-          action: 'show_wallet',
-        },
-        {
-          title: 'Clave pública = Tu dirección',
-          text: 'Tu clave pública (empieza con "G") es como tu número de cuenta. Puedes compartirla para recibir XLM. Es como decirle a alguien tu número para que te haga una transferencia.',
-          icon: '🔑',
-        },
-        {
-          title: 'Clave privada = Tu contraseña',
-          text: 'Tu clave privada (empieza con "S") es el secreto que nunca debes compartir. Tonalli la guarda segura para ti. Es la que autoriza transacciones en tu nombre.',
-          icon: '🔒',
-        },
-        {
-          title: 'Tus recompensas en blockchain',
-          text: 'Cada vez que completes una lección, recibirás XLM reales (en testnet para esta demo) y un NFT certificado que quedará para siempre en la blockchain de Stellar. ¡Nadie puede quitártelo!',
-          icon: '🏆',
-        },
-        {
-          title: 'Ver tus transacciones',
-          text: 'Puedes ver todas tus transacciones en Stellar Expert (stellar.expert). Es un explorador público donde cualquiera puede verificar que tus certificados son auténticos.',
-          icon: '🔍',
-        },
-      ],
-      keyTerms: [
-        {
-          term: 'Clave pública',
-          definition: 'Tu dirección para recibir fondos',
-        },
-        {
-          term: 'Clave privada',
-          definition: 'Tu secreto para autorizar transacciones',
-        },
-        { term: 'NFT', definition: 'Certificado único en blockchain' },
-        {
-          term: 'Testnet',
-          definition: 'Red de pruebas de Stellar',
-        },
-      ],
-    }),
-  });
-
-  const saved3 = await lessonRepo.save(lesson3);
-
-  const quiz3 = quizRepo.create({
-    lessonId: saved3.id,
-    questionsPool: JSON.stringify(LESSON_3_QUESTIONS),
-    questionsPerAttempt: 10,
-    passingScore: 70,
-  });
-  await quizRepo.save(quiz3);
-  console.log(`✅ Lesson 3 created: ${saved3.title}`);
 
   console.log('\n🎉 Seed completed successfully!');
   console.log('');
-  console.log('👤 USUARIOS CREADOS:');
-  console.log('   Admin  → admin@tonalli.mx  / Admin2024!  (role: admin)');
-  console.log('   Usuario → demo@tonalli.mx   / Demo2024!   (role: user)');
+  console.log('👤 USUARIOS:');
+  console.log('   Admin   → admin@tonalli.mx   / Admin2024!   (role: admin, premium)');
+  console.log('   Free    → demo@tonalli.mx    / Demo2024!    (role: user, free)');
+  console.log('   Premium → premium@tonalli.mx / Premium2024! (role: user, premium)');
   console.log('');
-  console.log(`📚 Module: "${MODULE_NAME}"`);
-  console.log(`📖 3 lessons + 1 chapter created`);
-  console.log(`🎯 10 random questions shown per quiz attempt`);
-  console.log(`⭐ 50 XP + 0.5 XLM reward per lesson`);
+  console.log('📚 3 Capítulos con 4 módulos cada uno:');
+  console.log('   Cap 1: Introducción al Blockchain');
+  console.log('   Cap 2: Stellar Network');
+  console.log('   Cap 3: Wallets y Seguridad');
+  console.log('');
+  console.log('🎯 Cada capítulo: Info → Video → Quiz (5 preguntas) → Examen Final (10 preguntas)');
+  console.log('❤️ Free: 3 vidas, 24h espera | Premium: ilimitadas');
+  console.log('🔀 Preguntas y opciones se mezclan en cada intento');
 
   await AppDataSource.destroy();
 }

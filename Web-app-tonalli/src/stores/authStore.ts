@@ -28,16 +28,16 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (username: string, email: string, password: string, city: string) => {
+      register: async (username: string, email: string, password: string, city: string, dateOfBirth?: string) => {
         set({ isLoading: true });
         try {
           if (MOCK_MODE) {
             await new Promise((r) => setTimeout(r, 1000));
-            const newUser: User = { ...mockUser, username, email, city, xp: 0, level: 1, streak: 0, xlmEarned: 0, lessonsCompleted: 0, nftCertificates: [] };
+            const newUser: User = { ...mockUser, username, email, city, xp: 0, level: 1, streak: 0, xlmEarned: 0, lessonsCompleted: 0, nftCertificates: [], isPremium: false };
             set({ user: newUser, token: 'mock-token-new', isAuthenticated: true, isLoading: false });
             return;
           }
-          const data = await apiService.register(username, email, password, city);
+          const data = await apiService.register(username, email, password, city, dateOfBirth);
           set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
         } catch (err) {
           set({ isLoading: false });

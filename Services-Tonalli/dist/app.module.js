@@ -18,7 +18,14 @@ const lessons_module_1 = require("./lessons/lessons.module");
 const stellar_module_1 = require("./stellar/stellar.module");
 const progress_module_1 = require("./progress/progress.module");
 const chapters_module_1 = require("./chapters/chapters.module");
+const podium_module_1 = require("./podium/podium.module");
+const certificates_module_1 = require("./certificates/certificates.module");
 const chapter_entity_1 = require("./chapters/entities/chapter.entity");
+const chapter_module_entity_1 = require("./chapters/entities/chapter-module.entity");
+const chapter_progress_entity_1 = require("./chapters/entities/chapter-progress.entity");
+const weekly_score_entity_1 = require("./podium/entities/weekly-score.entity");
+const podium_reward_entity_1 = require("./podium/entities/podium-reward.entity");
+const acta_certificate_entity_1 = require("./certificates/entities/acta-certificate.entity");
 const user_entity_1 = require("./users/entities/user.entity");
 const lesson_entity_1 = require("./lessons/entities/lesson.entity");
 const quiz_entity_1 = require("./lessons/entities/quiz.entity");
@@ -43,7 +50,7 @@ exports.AppModule = AppModule = __decorate([
                     username: process.env.DB_USER || 'root',
                     password: process.env.DB_PASS || '',
                     database: process.env.DB_NAME || 'tonalli',
-                    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak, chapter_entity_1.Chapter],
+                    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak, chapter_entity_1.Chapter, chapter_module_entity_1.ChapterModule, chapter_progress_entity_1.ChapterProgress, weekly_score_entity_1.WeeklyScore, podium_reward_entity_1.PodiumReward, acta_certificate_entity_1.ActaCertificate],
                     synchronize: true,
                     logging: false,
                     charset: 'utf8mb4',
@@ -55,6 +62,8 @@ exports.AppModule = AppModule = __decorate([
             stellar_module_1.StellarModule,
             progress_module_1.ProgressModule,
             chapters_module_1.ChaptersModule,
+            podium_module_1.PodiumModule,
+            certificates_module_1.CertificatesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -58,6 +58,18 @@ let AuthService = class AuthService {
         this.stellarService = stellarService;
     }
     async register(dto) {
+        if (dto.dateOfBirth) {
+            const dob = new Date(dto.dateOfBirth);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if (age < 18) {
+                throw new common_1.BadRequestException('Debes ser mayor de 18 años para registrarte en Tonalli');
+            }
+        }
         const existingEmail = await this.usersService.findByEmail(dto.email);
         if (existingEmail)
             throw new common_1.ConflictException('Email already registered');
@@ -73,6 +85,7 @@ let AuthService = class AuthService {
             displayName: dto.displayName || dto.username,
             city: dto.city || 'Ciudad de México',
             character: dto.character || 'chima',
+            dateOfBirth: dto.dateOfBirth || undefined,
             stellarPublicKey: stellarKeypair.publicKey,
             stellarSecretKey: stellarKeypair.secretKey,
             xp: 0,
@@ -96,6 +109,7 @@ let AuthService = class AuthService {
                 walletAddress: user.stellarPublicKey,
                 character: user.character,
                 role: user.role || 'user',
+                isPremium: user.isPremium || false,
             },
         };
     }
@@ -120,6 +134,7 @@ let AuthService = class AuthService {
                 walletAddress: user.stellarPublicKey,
                 character: user.character,
                 role: user.role || 'user',
+                isPremium: user.isPremium || false,
             },
         };
     }

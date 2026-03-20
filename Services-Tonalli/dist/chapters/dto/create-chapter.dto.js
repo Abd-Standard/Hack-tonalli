@@ -11,6 +11,7 @@ class CreateChapterDto {
     coverImage;
     estimatedMinutes;
     xpReward;
+    releaseWeek;
 }
 exports.CreateChapterDto = CreateChapterDto;
 //# sourceMappingURL=create-chapter.dto.js.map

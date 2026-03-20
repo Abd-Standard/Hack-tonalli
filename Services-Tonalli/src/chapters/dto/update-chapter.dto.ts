@@ -8,4 +8,5 @@ export class UpdateChapterDto {
   coverImage?: string;
   estimatedMinutes?: number;
   xpReward?: number;
+  releaseWeek?: string;
 }

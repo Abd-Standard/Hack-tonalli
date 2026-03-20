@@ -15,6 +15,7 @@ export declare class AuthController {
             walletAddress: string;
             character: string;
             role: "user" | "admin";
+            isPremium: boolean;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -30,6 +31,7 @@ export declare class AuthController {
             walletAddress: string;
             character: string;
             role: "user" | "admin";
+            isPremium: boolean;
         };
     }>;
 }

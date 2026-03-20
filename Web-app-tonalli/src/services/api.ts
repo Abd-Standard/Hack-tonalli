@@ -52,18 +52,19 @@ function normalizeUser(u: any) {
     lessonsCompleted: u.lessonsCompleted || 0,
     nftCertificates: u.nftCertificates || [],
     role: (u.role as 'admin' | 'user') || 'user',
+    isPremium: u.isPremium || false,
   };
 }
 
 export const apiService = {
+  // ── Auth ─────────────────────────────────────────────────────────────────
   login: async (email: string, password: string) => {
     const res = await api.post('/auth/login', { email, password });
-    // backend returns access_token, normalize to token
     return { token: res.data.access_token, user: normalizeUser(res.data.user) };
   },
 
-  register: async (username: string, email: string, password: string, city: string) => {
-    const res = await api.post('/auth/register', { username, email, password, city });
+  register: async (username: string, email: string, password: string, city: string, dateOfBirth?: string) => {
+    const res = await api.post('/auth/register', { username, email, password, city, dateOfBirth });
     return { token: res.data.access_token, user: normalizeUser(res.data.user) };
   },
 
@@ -72,6 +73,7 @@ export const apiService = {
     return normalizeUser(res.data);
   },
 
+  // ── Legacy lessons (backward compat) ────────────────────────────────────
   getModules: async () => {
     const res = await api.get('/lessons/modules');
     return res.data;
@@ -97,57 +99,130 @@ export const apiService = {
     return res.data;
   },
 
-  getLeaderboard: async () => {
-    const res = await api.get('/rankings');
-    return res.data;
-  },
-
-  getCertificates: async () => {
-    const res = await api.get('/progress/certificates');
-    return res.data;
-  },
-
-  // ── Chapters ─────────────────────────────────────────────────────────────
-
-  /** User: get published chapters */
+  // ── Chapters (new system) ───────────────────────────────────────────────
   getChapters: async () => {
     const res = await api.get('/chapters');
     return res.data;
   },
 
-  /** User/Admin: get single chapter */
   getChapter: async (id: string) => {
     const res = await api.get(`/chapters/${id}`);
     return res.data;
   },
 
-  /** Admin: get all chapters (including unpublished) */
+  getChapterWithProgress: async (id: string) => {
+    const res = await api.get(`/chapters/${id}/progress`);
+    return res.data;
+  },
+
+  getChapterCompletion: async (id: string) => {
+    const res = await api.get(`/chapters/${id}/completion`);
+    return res.data;
+  },
+
+  completeInfoModule: async (moduleId: string) => {
+    const res = await api.post(`/chapters/modules/${moduleId}/complete-info`);
+    return res.data;
+  },
+
+  updateVideoProgress: async (moduleId: string, percent: number) => {
+    const res = await api.post(`/chapters/modules/${moduleId}/video-progress`, { percent });
+    return res.data;
+  },
+
+  getChapterQuiz: async (moduleId: string) => {
+    const res = await api.get(`/chapters/modules/${moduleId}/quiz`);
+    return res.data;
+  },
+
+  submitChapterQuiz: async (moduleId: string, answers: { questionId: string; selectedIndex: number }[]) => {
+    const res = await api.post(`/chapters/modules/${moduleId}/quiz/submit`, { answers });
+    return res.data;
+  },
+
+  reportQuizAbandon: async (moduleId: string, reason: string) => {
+    const res = await api.post(`/chapters/modules/${moduleId}/quiz/abandon`, { reason });
+    return res.data;
+  },
+
+  unlockFinalExam: async (chapterId: string) => {
+    const res = await api.post(`/chapters/${chapterId}/unlock-exam`);
+    return res.data;
+  },
+
+  // ── Admin chapters ──────────────────────────────────────────────────────
   adminGetChapters: async () => {
     const res = await api.get('/chapters/admin/all');
     return res.data;
   },
 
-  /** Admin: create chapter */
-  adminCreateChapter: async (data: Partial<{ title: string; description: string; content: string; moduleTag: string; order: number; published: boolean; estimatedMinutes: number; xpReward: number }>) => {
+  adminCreateChapter: async (data: Record<string, unknown>) => {
     const res = await api.post('/chapters', data);
     return res.data;
   },
 
-  /** Admin: update chapter */
   adminUpdateChapter: async (id: string, data: Record<string, unknown>) => {
     const res = await api.patch(`/chapters/${id}`, data);
     return res.data;
   },
 
-  /** Admin: toggle publish */
+  adminUpdateModule: async (moduleId: string, data: Record<string, unknown>) => {
+    const res = await api.patch(`/chapters/modules/${moduleId}`, data);
+    return res.data;
+  },
+
   adminTogglePublish: async (id: string) => {
     const res = await api.patch(`/chapters/${id}/publish`);
     return res.data;
   },
 
-  /** Admin: delete chapter */
   adminDeleteChapter: async (id: string) => {
     await api.delete(`/chapters/${id}`);
+  },
+
+  // ── Leaderboard / Podium ────────────────────────────────────────────────
+  getLeaderboard: async () => {
+    const res = await api.get('/podium/global');
+    return res.data;
+  },
+
+  getWeeklyPodium: async () => {
+    const res = await api.get('/podium/weekly');
+    return res.data;
+  },
+
+  getCityLeaderboard: async (city: string) => {
+    const res = await api.get(`/podium/city?city=${encodeURIComponent(city)}`);
+    return res.data;
+  },
+
+  // ── Certificates (ACTA) ─────────────────────────────────────────────────
+  getCertificates: async () => {
+    const res = await api.get('/certificates');
+    return res.data;
+  },
+
+  storeCertificate: async (data: {
+    chapterId: string;
+    chapterTitle: string;
+    actaVcId: string;
+    txHash: string;
+    examScore: number;
+    type: 'official' | 'achievement';
+  }) => {
+    const res = await api.post('/certificates/store', data);
+    return res.data;
+  },
+
+  verifyCertificate: async (vcId: string) => {
+    const res = await api.get(`/certificates/verify?vcId=${encodeURIComponent(vcId)}`);
+    return res.data;
+  },
+
+  // ── Legacy ──────────────────────────────────────────────────────────────
+  getRankings: async () => {
+    const res = await api.get('/rankings');
+    return res.data;
   },
 };
 

@@ -31,6 +31,30 @@ let ChaptersController = class ChaptersController {
     findOne(id) {
         return this.chaptersService.findOne(id);
     }
+    getChapterWithProgress(id, req) {
+        return this.chaptersService.getChapterWithProgress(id, req.user.id);
+    }
+    getChapterCompletion(id, req) {
+        return this.chaptersService.getChapterCompletion(id, req.user.id);
+    }
+    completeInfoModule(moduleId, req) {
+        return this.chaptersService.completeInfoModule(moduleId, req.user.id);
+    }
+    updateVideoProgress(moduleId, percent, req) {
+        return this.chaptersService.updateVideoProgress(moduleId, req.user.id, percent);
+    }
+    getQuizQuestions(moduleId, req) {
+        return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
+    }
+    submitQuiz(moduleId, answers, req) {
+        return this.chaptersService.submitQuiz(moduleId, req.user.id, answers);
+    }
+    reportQuizAbandon(moduleId, reason, req) {
+        return this.chaptersService.reportQuizAbandon(moduleId, req.user.id, reason || 'tab_switch');
+    }
+    unlockFinalExam(id, req) {
+        return this.chaptersService.unlockFinalExam(id, req.user.id);
+    }
     findAll() {
         return this.chaptersService.findAll();
     }
@@ -39,6 +63,9 @@ let ChaptersController = class ChaptersController {
     }
     update(id, dto) {
         return this.chaptersService.update(id, dto);
+    }
+    updateModule(moduleId, data) {
+        return this.chaptersService.updateModule(moduleId, data);
     }
     togglePublish(id) {
         return this.chaptersService.togglePublish(id);
@@ -63,6 +90,81 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':id/progress'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "getChapterWithProgress", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':id/completion'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "getChapterCompletion", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('modules/:moduleId/complete-info'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "completeInfoModule", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('modules/:moduleId/video-progress'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Body)('percent')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "updateVideoProgress", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('modules/:moduleId/quiz'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "getQuizQuestions", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('modules/:moduleId/quiz/submit'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Body)('answers')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Array, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "submitQuiz", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('modules/:moduleId/quiz/abandon'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Body)('reason')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "reportQuizAbandon", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)(':id/unlock-exam'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "unlockFinalExam", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),
@@ -90,6 +192,16 @@ __decorate([
     __metadata("design:paramtypes", [String, update_chapter_dto_1.UpdateChapterDto]),
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "update", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Patch)('modules/:moduleId'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "updateModule", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),

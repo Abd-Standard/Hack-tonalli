@@ -54,6 +54,15 @@ export class User {
   @Column({ default: false })
   isFunded: boolean;
 
+  @Column({ default: false })
+  isPremium: boolean;
+
+  @Column({ nullable: true })
+  subscriptionExpiry: Date;
+
+  @Column({ nullable: true })
+  dateOfBirth: string;
+
   @Column({ nullable: true })
   character: string;
 

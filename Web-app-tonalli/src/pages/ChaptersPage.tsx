@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Clock, Zap, ChevronRight, X, Tag } from 'lucide-react';
 import { apiService } from '../services/api';
@@ -15,6 +16,7 @@ const TAG_COLORS: Record<string, string> = {
 };
 
 export function ChaptersPage() {
+  const navigate = useNavigate();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Chapter | null>(null);
@@ -107,7 +109,7 @@ export function ChaptersPage() {
                   className="card"
                   style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                   whileHover={{ y: -3, borderColor: 'var(--border-active)' }}
-                  onClick={() => setSelected(ch)}
+                  onClick={() => navigate(`/chapters/${ch.id}`)}
                 >
                   {/* White shimmer top */}
                   <div style={{

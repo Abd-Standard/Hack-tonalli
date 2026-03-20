@@ -15,6 +15,7 @@ export function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [city, setCity] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
@@ -30,10 +31,17 @@ export function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!password || !city) { setError('Completa todos los campos'); return; }
+    if (!password || !city || !dateOfBirth) { setError('Completa todos los campos'); return; }
     if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
+    // Client-side age check
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    if (age < 18) { setError('Debes ser mayor de 18 años para registrarte'); return; }
     try {
-      await register(username, email, password, city);
+      await register(username, email, password, city, dateOfBirth);
       navigate('/dashboard');
     } catch {
       setError('Error al registrarse. Intenta de nuevo.');
@@ -174,6 +182,20 @@ export function Register() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Fecha de nacimiento</label>
+                <input
+                  type="date"
+                  className="input-field"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                  Debes ser mayor de 18 años
+                </span>
               </div>
 
               <div className="form-group">

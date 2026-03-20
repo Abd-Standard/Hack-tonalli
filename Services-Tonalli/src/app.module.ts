@@ -9,7 +9,14 @@ import { LessonsModule } from './lessons/lessons.module';
 import { StellarModule } from './stellar/stellar.module';
 import { ProgressModule } from './progress/progress.module';
 import { ChaptersModule } from './chapters/chapters.module';
+import { PodiumModule } from './podium/podium.module';
+import { CertificatesModule } from './certificates/certificates.module';
 import { Chapter } from './chapters/entities/chapter.entity';
+import { ChapterModule as ChapterModuleEntity } from './chapters/entities/chapter-module.entity';
+import { ChapterProgress } from './chapters/entities/chapter-progress.entity';
+import { WeeklyScore } from './podium/entities/weekly-score.entity';
+import { PodiumReward } from './podium/entities/podium-reward.entity';
+import { ActaCertificate } from './certificates/entities/acta-certificate.entity';
 import { User } from './users/entities/user.entity';
 import { Lesson } from './lessons/entities/lesson.entity';
 import { Quiz } from './lessons/entities/quiz.entity';
@@ -31,7 +38,7 @@ import { Streak } from './users/entities/streak.entity';
         username: process.env.DB_USER || 'root',
         password: process.env.DB_PASS || '',
         database: process.env.DB_NAME || 'tonalli',
-        entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak, Chapter],
+        entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak, Chapter, ChapterModuleEntity, ChapterProgress, WeeklyScore, PodiumReward, ActaCertificate],
         synchronize: true,   // crea/actualiza tablas automáticamente
         logging: false,
         charset: 'utf8mb4',
@@ -43,6 +50,8 @@ import { Streak } from './users/entities/streak.entity';
     StellarModule,
     ProgressModule,
     ChaptersModule,
+    PodiumModule,
+    CertificatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

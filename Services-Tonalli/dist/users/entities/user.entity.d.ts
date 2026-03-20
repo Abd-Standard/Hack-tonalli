@@ -16,6 +16,9 @@ export declare class User {
     currentStreak: number;
     lastActivityDate: string;
     isFunded: boolean;
+    isPremium: boolean;
+    subscriptionExpiry: Date;
+    dateOfBirth: string;
     character: string;
     progress: Progress[];
     certificates: NFTCertificate[];

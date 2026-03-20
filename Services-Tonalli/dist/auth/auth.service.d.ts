@@ -19,6 +19,7 @@ export declare class AuthService {
             walletAddress: string;
             character: string;
             role: "user" | "admin";
+            isPremium: boolean;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -34,6 +35,7 @@ export declare class AuthService {
             walletAddress: string;
             character: string;
             role: "user" | "admin";
+            isPremium: boolean;
         };
     }>;
 }
