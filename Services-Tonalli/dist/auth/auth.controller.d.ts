@@ -14,6 +14,7 @@ export declare class AuthController {
             xp: number;
             walletAddress: string;
             character: string;
+            role: "user" | "admin";
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -28,6 +29,7 @@ export declare class AuthController {
             currentStreak: number;
             walletAddress: string;
             character: string;
+            role: "user" | "admin";
         };
     }>;
 }

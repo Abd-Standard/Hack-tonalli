@@ -8,6 +8,8 @@ import { UsersModule } from './users/users.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { StellarModule } from './stellar/stellar.module';
 import { ProgressModule } from './progress/progress.module';
+import { ChaptersModule } from './chapters/chapters.module';
+import { Chapter } from './chapters/entities/chapter.entity';
 import { User } from './users/entities/user.entity';
 import { Lesson } from './lessons/entities/lesson.entity';
 import { Quiz } from './lessons/entities/quiz.entity';
@@ -29,7 +31,7 @@ import { Streak } from './users/entities/streak.entity';
         username: process.env.DB_USER || 'root',
         password: process.env.DB_PASS || '',
         database: process.env.DB_NAME || 'tonalli',
-        entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak],
+        entities: [User, Lesson, Quiz, Progress, NFTCertificate, Streak, Chapter],
         synchronize: true,   // crea/actualiza tablas automáticamente
         logging: false,
         charset: 'utf8mb4',
@@ -40,6 +42,7 @@ import { Streak } from './users/entities/streak.entity';
     LessonsModule,
     StellarModule,
     ProgressModule,
+    ChaptersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

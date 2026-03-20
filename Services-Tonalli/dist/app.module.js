@@ -17,6 +17,8 @@ const users_module_1 = require("./users/users.module");
 const lessons_module_1 = require("./lessons/lessons.module");
 const stellar_module_1 = require("./stellar/stellar.module");
 const progress_module_1 = require("./progress/progress.module");
+const chapters_module_1 = require("./chapters/chapters.module");
+const chapter_entity_1 = require("./chapters/entities/chapter.entity");
 const user_entity_1 = require("./users/entities/user.entity");
 const lesson_entity_1 = require("./lessons/entities/lesson.entity");
 const quiz_entity_1 = require("./lessons/entities/quiz.entity");
@@ -41,7 +43,7 @@ exports.AppModule = AppModule = __decorate([
                     username: process.env.DB_USER || 'root',
                     password: process.env.DB_PASS || '',
                     database: process.env.DB_NAME || 'tonalli',
-                    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak],
+                    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak, chapter_entity_1.Chapter],
                     synchronize: true,
                     logging: false,
                     charset: 'utf8mb4',
@@ -52,6 +54,7 @@ exports.AppModule = AppModule = __decorate([
             lessons_module_1.LessonsModule,
             stellar_module_1.StellarModule,
             progress_module_1.ProgressModule,
+            chapters_module_1.ChaptersModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

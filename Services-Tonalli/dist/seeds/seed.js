@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
+const bcrypt = __importStar(require("bcryptjs"));
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../users/entities/user.entity");
 const lesson_entity_1 = require("../lessons/entities/lesson.entity");
@@ -43,6 +44,7 @@ const quiz_entity_1 = require("../lessons/entities/quiz.entity");
 const progress_entity_1 = require("../progress/entities/progress.entity");
 const nft_certificate_entity_1 = require("../progress/entities/nft-certificate.entity");
 const streak_entity_1 = require("../users/entities/streak.entity");
+const chapter_entity_1 = require("../chapters/entities/chapter.entity");
 const AppDataSource = new typeorm_1.DataSource({
     type: 'mysql',
     host: process.env.DB_HOST || 'localhost',
@@ -50,7 +52,7 @@ const AppDataSource = new typeorm_1.DataSource({
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASS || '',
     database: process.env.DB_NAME || 'tonalli',
-    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak],
+    entities: [user_entity_1.User, lesson_entity_1.Lesson, quiz_entity_1.Quiz, progress_entity_1.Progress, nft_certificate_entity_1.NFTCertificate, streak_entity_1.Streak, chapter_entity_1.Chapter],
     synchronize: true,
     logging: false,
     charset: 'utf8mb4',
@@ -561,11 +563,93 @@ const LESSON_3_QUESTIONS = [
 async function seed() {
     console.log('🌱 Starting Tonalli seed...');
     await AppDataSource.initialize();
+    const userRepo = AppDataSource.getRepository(user_entity_1.User);
     const lessonRepo = AppDataSource.getRepository(lesson_entity_1.Lesson);
     const quizRepo = AppDataSource.getRepository(quiz_entity_1.Quiz);
+    const chapterRepo = AppDataSource.getRepository(chapter_entity_1.Chapter);
+    const adminEmail = 'admin@tonalli.mx';
+    const userEmail = 'demo@tonalli.mx';
+    const existingAdmin = await userRepo.findOne({ where: { email: adminEmail } });
+    if (!existingAdmin) {
+        const adminUser = userRepo.create({
+            email: adminEmail,
+            username: 'TonalliAdmin',
+            displayName: 'Administrador',
+            password: await bcrypt.hash('Admin2024!', 10),
+            city: 'Ciudad de México',
+            role: 'admin',
+            xp: 0,
+            totalXp: 0,
+            currentStreak: 0,
+            stellarPublicKey: 'GADMIN_PUBLIC_KEY',
+            stellarSecretKey: 'SADMIN_SECRET_KEY',
+        });
+        await userRepo.save(adminUser);
+        console.log('✅ Admin user created: admin@tonalli.mx / Admin2024!');
+    }
+    const existingUser = await userRepo.findOne({ where: { email: userEmail } });
+    if (!existingUser) {
+        const demoUser = userRepo.create({
+            email: userEmail,
+            username: 'CryptoAzteca',
+            displayName: 'Crypto Azteca',
+            password: await bcrypt.hash('Demo2024!', 10),
+            city: 'Guadalajara',
+            role: 'user',
+            xp: 0,
+            totalXp: 0,
+            currentStreak: 0,
+            stellarPublicKey: 'GDEMO_PUBLIC_KEY',
+            stellarSecretKey: 'SDEMO_SECRET_KEY',
+        });
+        await userRepo.save(demoUser);
+        console.log('✅ Demo user created: demo@tonalli.mx / Demo2024!');
+    }
+    const existingChapters = await chapterRepo.count();
+    if (existingChapters === 0) {
+        const sampleChapter = chapterRepo.create({
+            title: 'Introducción al Blockchain',
+            description: 'Aprende los conceptos fundamentales de la tecnología blockchain y por qué está cambiando el mundo.',
+            content: `¿Qué es el Blockchain?
+
+Una blockchain (cadena de bloques) es un tipo especial de base de datos distribuida. A diferencia de una base de datos tradicional controlada por una sola empresa, la blockchain es mantenida por miles de computadoras alrededor del mundo.
+
+¿Cómo funciona?
+
+Los datos se organizan en "bloques". Cada bloque contiene:
+- Un conjunto de transacciones o información
+- Un timestamp (marca de tiempo)
+- Un hash del bloque anterior
+
+Esta estructura crea una cadena donde cada bloque depende del anterior, haciendo casi imposible alterar la historia sin que todo el mundo lo note.
+
+¿Por qué es importante?
+
+La blockchain elimina la necesidad de un intermediario (banco, gobierno, empresa) para que dos personas puedan hacer transacciones de forma confiable. Esto tiene aplicaciones en:
+
+• Pagos internacionales (como Stellar)
+• Contratos automáticos (Smart Contracts)
+• Certificados digitales (NFTs)
+• Identidad digital
+• Votaciones transparentes
+
+Blockchain en Latinoamérica
+
+En países como México, Argentina y Venezuela, donde la inflación y la falta de acceso bancario son retos reales, el blockchain ofrece alternativas concretas para la inclusión financiera.
+
+Tonalli fue creado para que personas como tú puedan aprender estos conceptos y ganar criptomonedas reales mientras estudian.`,
+            moduleTag: 'blockchain',
+            order: 1,
+            published: true,
+            estimatedMinutes: 8,
+            xpReward: 50,
+        });
+        await chapterRepo.save(sampleChapter);
+        console.log('✅ Sample chapter created: Introducción al Blockchain');
+    }
     const existingLessons = await lessonRepo.count();
     if (existingLessons > 0) {
-        console.log(`✅ Seed already done (${existingLessons} lessons found). Skipping.`);
+        console.log(`✅ Lessons already seeded (${existingLessons} found). Skipping lessons.`);
         await AppDataSource.destroy();
         return;
     }
@@ -756,11 +840,15 @@ async function seed() {
     await quizRepo.save(quiz3);
     console.log(`✅ Lesson 3 created: ${saved3.title}`);
     console.log('\n🎉 Seed completed successfully!');
+    console.log('');
+    console.log('👤 USUARIOS CREADOS:');
+    console.log('   Admin  → admin@tonalli.mx  / Admin2024!  (role: admin)');
+    console.log('   Usuario → demo@tonalli.mx   / Demo2024!   (role: user)');
+    console.log('');
     console.log(`📚 Module: "${MODULE_NAME}"`);
-    console.log(`📖 3 lessons created with 15 questions each`);
+    console.log(`📖 3 lessons + 1 chapter created`);
     console.log(`🎯 10 random questions shown per quiz attempt`);
     console.log(`⭐ 50 XP + 0.5 XLM reward per lesson`);
-    console.log(`🏆 NFT certificate minted on Stellar Testnet`);
     await AppDataSource.destroy();
 }
 seed().catch((err) => {

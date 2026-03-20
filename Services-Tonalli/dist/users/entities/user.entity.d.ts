@@ -8,6 +8,7 @@ export declare class User {
     username: string;
     displayName: string;
     city: string;
+    role: 'admin' | 'user';
     stellarPublicKey: string;
     stellarSecretKey: string;
     xp: number;

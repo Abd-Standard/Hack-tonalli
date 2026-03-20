@@ -54,7 +54,7 @@ export class AuthService {
       },
     );
 
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
 
     return {
       access_token: token,
@@ -66,6 +66,7 @@ export class AuthService {
         xp: user.xp,
         walletAddress: user.stellarPublicKey,
         character: user.character,
+        role: user.role || 'user',
       },
     };
   }
@@ -77,7 +78,7 @@ export class AuthService {
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
 
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
 
     return {
       access_token: token,
@@ -91,6 +92,7 @@ export class AuthService {
         currentStreak: user.currentStreak,
         walletAddress: user.stellarPublicKey,
         character: user.character,
+        role: user.role || 'user',
       },
     };
   }

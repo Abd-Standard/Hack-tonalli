@@ -30,6 +30,9 @@ export class User {
   @Column({ nullable: true })
   city: string;
 
+  @Column({ default: 'user' })
+  role: 'admin' | 'user';
+
   @Column({ nullable: true })
   stellarPublicKey: string;
 

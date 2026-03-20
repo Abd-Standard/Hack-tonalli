@@ -28,7 +28,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         const user = await this.usersService.findById(payload.sub);
         if (!user)
             throw new common_1.UnauthorizedException();
-        return { id: user.id, email: user.email, username: user.username };
+        return { id: user.id, email: user.email, username: user.username, role: user.role || 'user' };
     }
 };
 exports.JwtStrategy = JwtStrategy;

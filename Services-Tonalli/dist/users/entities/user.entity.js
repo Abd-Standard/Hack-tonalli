@@ -21,6 +21,7 @@ let User = class User {
     username;
     displayName;
     city;
+    role;
     stellarPublicKey;
     stellarSecretKey;
     xp;
@@ -60,6 +61,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "city", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'user' }),
+    __metadata("design:type", String)
+], User.prototype, "role", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
