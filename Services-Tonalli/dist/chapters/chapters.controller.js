@@ -28,14 +28,14 @@ let ChaptersController = class ChaptersController {
     findPublished(req) {
         return this.chaptersService.findPublishedForUser(req.user.id);
     }
-    findOne(id) {
-        return this.chaptersService.findOne(id);
-    }
-    getChapterWithProgress(id, req) {
-        return this.chaptersService.getChapterWithProgress(id, req.user.id);
+    findAll() {
+        return this.chaptersService.findAll();
     }
     getModuleContent(moduleId) {
         return this.chaptersService.getModuleContent(moduleId);
+    }
+    getQuizQuestions(moduleId, req) {
+        return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
     }
     completeInfoModule(moduleId, req) {
         return this.chaptersService.completeInfoModule(moduleId, req.user.id);
@@ -43,29 +43,29 @@ let ChaptersController = class ChaptersController {
     updateVideoProgress(moduleId, percent, req) {
         return this.chaptersService.updateVideoProgress(moduleId, req.user.id, percent);
     }
-    getQuizQuestions(moduleId, req) {
-        return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
-    }
     submitQuiz(moduleId, answers, req) {
         return this.chaptersService.submitQuiz(moduleId, req.user.id, answers);
     }
     reportQuizAbandon(moduleId, reason, req) {
         return this.chaptersService.reportQuizAbandon(moduleId, req.user.id, reason || 'tab_switch');
     }
-    unlockFinalExam(id, req) {
-        return this.chaptersService.unlockFinalExam(id, req.user.id);
+    updateModule(moduleId, data) {
+        return this.chaptersService.updateModule(moduleId, data);
     }
-    findAll() {
-        return this.chaptersService.findAll();
+    findOne(id) {
+        return this.chaptersService.findOne(id);
+    }
+    getChapterWithProgress(id, req) {
+        return this.chaptersService.getChapterWithProgress(id, req.user.id);
     }
     create(dto) {
         return this.chaptersService.create(dto);
     }
+    unlockFinalExam(id, req) {
+        return this.chaptersService.unlockFinalExam(id, req.user.id);
+    }
     update(id, dto) {
         return this.chaptersService.update(id, dto);
-    }
-    updateModule(moduleId, data) {
-        return this.chaptersService.updateModule(moduleId, data);
     }
     togglePublish(id) {
         return this.chaptersService.togglePublish(id);
@@ -90,22 +90,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "findPublished", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Get)('admin/all'),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)(':id/progress'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "getChapterWithProgress", null);
+], ChaptersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('modules/:moduleId/content'),
@@ -114,6 +105,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "getModuleContent", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('modules/:moduleId/quiz'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "getQuizQuestions", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('modules/:moduleId/complete-info'),
@@ -135,15 +135,6 @@ __decorate([
 ], ChaptersController.prototype, "updateVideoProgress", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)('modules/:moduleId/quiz'),
-    __param(0, (0, common_1.Param)('moduleId')),
-    __param(1, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "getQuizQuestions", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('modules/:moduleId/quiz/submit'),
     __param(0, (0, common_1.Param)('moduleId')),
     __param(1, (0, common_1.Body)('answers')),
@@ -163,6 +154,42 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "reportQuizAbandon", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Patch)('modules/:moduleId'),
+    __param(0, (0, common_1.Param)('moduleId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "updateModule", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':id/progress'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "getChapterWithProgress", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_chapter_dto_1.CreateChapterDto]),
+    __metadata("design:returntype", void 0)
+], ChaptersController.prototype, "create", null);
+__decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(':id/unlock-exam'),
     __param(0, (0, common_1.Param)('id')),
@@ -174,23 +201,6 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),
-    (0, common_1.Get)('admin/all'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_chapter_dto_1.CreateChapterDto]),
-    __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "create", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -198,16 +208,6 @@ __decorate([
     __metadata("design:paramtypes", [String, update_chapter_dto_1.UpdateChapterDto]),
     __metadata("design:returntype", void 0)
 ], ChaptersController.prototype, "update", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('admin'),
-    (0, common_1.Patch)('modules/:moduleId'),
-    __param(0, (0, common_1.Param)('moduleId')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "updateModule", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),

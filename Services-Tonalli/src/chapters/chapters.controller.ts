@@ -13,7 +13,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class ChaptersController {
   constructor(private readonly chaptersService: ChaptersService) {}
 
-  // ── Public (any authenticated user) ──────────────────────────────────────
+  // ── Static/specific routes FIRST (before :id param routes) ───────────────
 
   /** GET /api/chapters — returns published chapters filtered by user plan + week */
   @UseGuards(JwtAuthGuard)
@@ -22,37 +22,38 @@ export class ChaptersController {
     return this.chaptersService.findPublishedForUser(req.user.id);
   }
 
-  /** GET /api/chapters/:id — returns a single chapter with modules */
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chaptersService.findOne(id);
+  /** GET /api/chapters/admin/all — all chapters including unpublished */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('admin/all')
+  findAll() {
+    return this.chaptersService.findAll();
   }
 
-  /** GET /api/chapters/:id/progress — chapter with user progress */
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/progress')
-  getChapterWithProgress(@Param('id') id: string, @Req() req: any) {
-    return this.chaptersService.getChapterWithProgress(id, req.user.id);
-  }
+  // ── Module routes (must be before :id to avoid conflict) ─────────────────
 
-  /** GET /api/chapters/modules/:moduleId/content — get module info/video/quiz status */
+  /** GET /api/chapters/modules/:moduleId/content */
   @UseGuards(JwtAuthGuard)
   @Get('modules/:moduleId/content')
   getModuleContent(@Param('moduleId') moduleId: string) {
     return this.chaptersService.getModuleContent(moduleId);
   }
 
-  // ── Module progress endpoints ────────────────────────────────────────────
+  /** GET /api/chapters/modules/:moduleId/quiz */
+  @UseGuards(JwtAuthGuard)
+  @Get('modules/:moduleId/quiz')
+  getQuizQuestions(@Param('moduleId') moduleId: string, @Req() req: any) {
+    return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
+  }
 
-  /** POST /api/chapters/modules/:moduleId/complete-info — mark info module done */
+  /** POST /api/chapters/modules/:moduleId/complete-info */
   @UseGuards(JwtAuthGuard)
   @Post('modules/:moduleId/complete-info')
   completeInfoModule(@Param('moduleId') moduleId: string, @Req() req: any) {
     return this.chaptersService.completeInfoModule(moduleId, req.user.id);
   }
 
-  /** POST /api/chapters/modules/:moduleId/video-progress — update video % */
+  /** POST /api/chapters/modules/:moduleId/video-progress */
   @UseGuards(JwtAuthGuard)
   @Post('modules/:moduleId/video-progress')
   updateVideoProgress(
@@ -63,14 +64,7 @@ export class ChaptersController {
     return this.chaptersService.updateVideoProgress(moduleId, req.user.id, percent);
   }
 
-  /** GET /api/chapters/modules/:moduleId/quiz — get quiz questions */
-  @UseGuards(JwtAuthGuard)
-  @Get('modules/:moduleId/quiz')
-  getQuizQuestions(@Param('moduleId') moduleId: string, @Req() req: any) {
-    return this.chaptersService.getQuizQuestions(moduleId, req.user.id);
-  }
-
-  /** POST /api/chapters/modules/:moduleId/quiz/submit — submit quiz answers */
+  /** POST /api/chapters/modules/:moduleId/quiz/submit */
   @UseGuards(JwtAuthGuard)
   @Post('modules/:moduleId/quiz/submit')
   submitQuiz(
@@ -81,7 +75,7 @@ export class ChaptersController {
     return this.chaptersService.submitQuiz(moduleId, req.user.id, answers);
   }
 
-  /** POST /api/chapters/modules/:moduleId/quiz/abandon — report cheating/abandon */
+  /** POST /api/chapters/modules/:moduleId/quiz/abandon */
   @UseGuards(JwtAuthGuard)
   @Post('modules/:moduleId/quiz/abandon')
   reportQuizAbandon(
@@ -92,40 +86,7 @@ export class ChaptersController {
     return this.chaptersService.reportQuizAbandon(moduleId, req.user.id, reason || 'tab_switch');
   }
 
-  /** POST /api/chapters/:id/unlock-exam — Free user unlocks Module 4 */
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/unlock-exam')
-  unlockFinalExam(@Param('id') id: string, @Req() req: any) {
-    return this.chaptersService.unlockFinalExam(id, req.user.id);
-  }
-
-  // ── Admin only ────────────────────────────────────────────────────────────
-
-  /** GET /api/chapters/admin/all — all chapters including unpublished */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @Get('admin/all')
-  findAll() {
-    return this.chaptersService.findAll();
-  }
-
-  /** POST /api/chapters — create new chapter (auto-creates 4 modules) */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @Post()
-  create(@Body() dto: CreateChapterDto) {
-    return this.chaptersService.create(dto);
-  }
-
-  /** PATCH /api/chapters/:id — update chapter */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateChapterDto) {
-    return this.chaptersService.update(id, dto);
-  }
-
-  /** PATCH /api/chapters/modules/:moduleId — update a module (content, questions, video) */
+  /** PATCH /api/chapters/modules/:moduleId — admin update module */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Patch('modules/:moduleId')
@@ -133,7 +94,46 @@ export class ChaptersController {
     return this.chaptersService.updateModule(moduleId, data);
   }
 
-  /** PATCH /api/chapters/:id/publish — toggle published */
+  // ── Param :id routes (AFTER static routes) ───────────────────────────────
+
+  /** GET /api/chapters/:id */
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.chaptersService.findOne(id);
+  }
+
+  /** GET /api/chapters/:id/progress */
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/progress')
+  getChapterWithProgress(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.getChapterWithProgress(id, req.user.id);
+  }
+
+  /** POST /api/chapters — create chapter */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Post()
+  create(@Body() dto: CreateChapterDto) {
+    return this.chaptersService.create(dto);
+  }
+
+  /** POST /api/chapters/:id/unlock-exam */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/unlock-exam')
+  unlockFinalExam(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.unlockFinalExam(id, req.user.id);
+  }
+
+  /** PATCH /api/chapters/:id */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateChapterDto) {
+    return this.chaptersService.update(id, dto);
+  }
+
+  /** PATCH /api/chapters/:id/publish */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Patch(':id/publish')
@@ -141,7 +141,7 @@ export class ChaptersController {
     return this.chaptersService.togglePublish(id);
   }
 
-  /** PATCH /api/chapters/:id/release — release chapter for current week */
+  /** PATCH /api/chapters/:id/release */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Patch(':id/release')
@@ -149,7 +149,7 @@ export class ChaptersController {
     return this.chaptersService.releaseThisWeek(id);
   }
 
-  /** PATCH /api/chapters/:id/release-week — set specific release week */
+  /** PATCH /api/chapters/:id/release-week */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Patch(':id/release-week')
@@ -157,7 +157,7 @@ export class ChaptersController {
     return this.chaptersService.setReleaseWeek(id, week);
   }
 
-  /** DELETE /api/chapters/:id — delete chapter */
+  /** DELETE /api/chapters/:id */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Delete(':id')
