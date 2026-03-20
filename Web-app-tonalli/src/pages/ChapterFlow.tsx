@@ -8,12 +8,19 @@ import { LivesIndicator } from '../components/LivesIndicator';
 import { ConversionScreen } from '../components/ConversionScreen';
 import { ChapterQuiz } from '../components/ChapterQuiz';
 
+type ActiveView =
+  | { step: 'overview' }
+  | { step: 'info'; mod: ChapterModuleData; content: any }
+  | { step: 'video'; mod: ChapterModuleData; videoUrl: string }
+  | { step: 'quiz'; mod: ChapterModuleData }
+  | { step: 'final_exam'; mod: ChapterModuleData };
+
 export function ChapterFlow() {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [chapter, setChapter] = useState<ChapterWithProgress | null>(null);
-  const [activeModule, setActiveModule] = useState<ChapterModuleData | null>(null);
+  const [view, setView] = useState<ActiveView>({ step: 'overview' });
   const [loading, setLoading] = useState(true);
   const [showConversion, setShowConversion] = useState(false);
   const [infoRead, setInfoRead] = useState(false);
@@ -23,32 +30,87 @@ export function ChapterFlow() {
     try {
       const data = await apiService.getChapterWithProgress(chapterId);
       setChapter(data);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
+    } catch (err) { console.error(err); }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadChapter(); }, [chapterId]);
+
+  const openModule = async (mod: ChapterModuleData) => {
+    if (!mod.unlocked) return;
+
+    if (mod.type === 'final_exam') {
+      setView({ step: 'final_exam', mod });
+      return;
+    }
+
+    // Lesson module: figure out which section to show
+    const s = mod.sections!;
+    if (!s.info.completed && s.info.hasContent) {
+      const data = await apiService.getModuleContent(mod.id);
+      setView({ step: 'info', mod, content: data.content });
+      setInfoRead(false);
+    } else if (!s.video.completed && s.video.hasVideo) {
+      const data = await apiService.getModuleContent(mod.id);
+      setView({ step: 'video', mod, videoUrl: data.videoUrl });
+    } else if (!s.quiz.completed) {
+      setView({ step: 'quiz', mod });
+    } else {
+      // All done, let them review
+      const data = await apiService.getModuleContent(mod.id);
+      setView({ step: 'info', mod, content: data.content });
     }
   };
 
-  useEffect(() => {
-    loadChapter();
-  }, [chapterId]);
+  const goToSection = async (mod: ChapterModuleData, section: 'info' | 'video' | 'quiz') => {
+    if (section === 'quiz') {
+      setView({ step: 'quiz', mod });
+    } else {
+      const data = await apiService.getModuleContent(mod.id);
+      if (section === 'info') {
+        setView({ step: 'info', mod, content: data.content });
+        setInfoRead(false);
+      } else {
+        setView({ step: 'video', mod, videoUrl: data.videoUrl });
+      }
+    }
+  };
 
   const handleCompleteInfo = async (moduleId: string) => {
     await apiService.completeInfoModule(moduleId);
     await loadChapter();
-    setActiveModule(null);
-    setInfoRead(false);
+    // Auto-advance to video or quiz
+    const updated = await apiService.getChapterWithProgress(chapterId!);
+    const mod = updated.modules.find((m: any) => m.id === moduleId);
+    if (mod?.sections?.video?.hasVideo && !mod.sections.video.completed) {
+      const data = await apiService.getModuleContent(moduleId);
+      setView({ step: 'video', mod, videoUrl: data.videoUrl });
+    } else {
+      setView({ step: 'quiz', mod });
+    }
+  };
+
+  const handleVideoComplete = async (moduleId: string) => {
+    await loadChapter();
+    const updated = await apiService.getChapterWithProgress(chapterId!);
+    const mod = updated.modules.find((m: any) => m.id === moduleId);
+    if (mod && !mod.sections?.quiz?.completed) {
+      setView({ step: 'quiz', mod });
+    } else {
+      setView({ step: 'overview' });
+    }
   };
 
   const handleQuizComplete = async () => {
     await loadChapter();
-    setActiveModule(null);
-
-    // Check if we're at 75% (modules 1-3 done, module 4 not started)
     const updated = await apiService.getChapterWithProgress(chapterId!);
+    setChapter(updated);
+
+    // Check 75% conversion
     if (updated.completionPercent === 75 && !user?.isPremium) {
       setShowConversion(true);
+    } else {
+      setView({ step: 'overview' });
     }
   };
 
@@ -56,120 +118,133 @@ export function ChapterFlow() {
     await apiService.unlockFinalExam(chapterId!);
     setShowConversion(false);
     await loadChapter();
+    setView({ step: 'overview' });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-400 border-t-transparent mx-auto mb-4" />
-          <p className="text-white">Cargando capítulo...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-400 border-t-transparent" />
       </div>
     );
   }
 
   if (!chapter) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <p className="text-red-400">Capítulo no encontrado</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400">Capitulo no encontrado</div>;
   }
 
-  // Show conversion screen
   if (showConversion) {
     return (
       <ConversionScreen
         chapterTitle={chapter.title}
         onUpgradePremium={() => navigate('/premium')}
         onBuyCertificate={handleUnlockExam}
-        onSkip={() => { setShowConversion(false); navigate('/chapters'); }}
+        onSkip={() => { setShowConversion(false); setView({ step: 'overview' }); }}
       />
     );
   }
 
-  // Show active module content
-  if (activeModule) {
+  // ── Active view rendering ────────────────────────────────────────────────
+
+  if (view.step !== 'overview') {
+    const mod = 'mod' in view ? view.mod : null;
     return (
       <div className="min-h-screen bg-gray-900">
-        {/* Header */}
         <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setActiveModule(null)}
-            className="text-gray-400 hover:text-white text-xl"
-          >
-            &larr;
-          </button>
+          <button onClick={() => setView({ step: 'overview' })} className="text-gray-400 hover:text-white text-xl">&larr;</button>
           <div className="flex-1">
-            <h2 className="text-white font-bold">{activeModule.title}</h2>
-            <p className="text-gray-400 text-sm">{chapter.title}</p>
+            <h2 className="text-white font-bold">{mod?.title}</h2>
+            <p className="text-gray-400 text-sm">
+              {chapter.title} &middot; {view.step === 'info' ? 'Lectura' : view.step === 'video' ? 'Video' : view.step === 'quiz' ? 'Quiz' : 'Examen Final'}
+            </p>
           </div>
-          {(activeModule.type === 'quiz' || activeModule.type === 'final_exam') && (
-            <LivesIndicator
-              lives={activeModule.livesRemaining}
-              lockedUntil={activeModule.lockedUntil}
-            />
+          {(view.step === 'quiz' || view.step === 'final_exam') && mod && (
+            <LivesIndicator lives={mod.livesRemaining} lockedUntil={mod.lockedUntil} />
           )}
         </div>
 
         <div className="max-w-3xl mx-auto p-4">
-          {/* Info Module */}
-          {activeModule.type === 'info' && (
+          {/* Section tabs for lesson modules */}
+          {mod?.type === 'lesson' && mod.sections && (
+            <div className="flex gap-2 mb-6">
+              {[
+                { key: 'info' as const, label: 'Lectura', icon: '\uD83D\uDCDA', done: mod.sections.info.completed },
+                { key: 'video' as const, label: 'Video', icon: '\uD83C\uDFAC', done: mod.sections.video.completed },
+                { key: 'quiz' as const, label: 'Quiz', icon: '\uD83D\uDCDD', done: mod.sections.quiz.completed },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => goToSection(mod, tab.key)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition ${
+                    view.step === tab.key
+                      ? 'bg-yellow-500 text-gray-900'
+                      : tab.done
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : 'bg-gray-800 text-gray-500 border border-gray-700'
+                  }`}
+                >
+                  {tab.icon} {tab.label} {tab.done ? '\u2714' : ''}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Info */}
+          {view.step === 'info' && 'content' in view && (
             <div>
-              <div
-                className="prose prose-invert max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html: formatContent(activeModule.content || ''),
-                }}
-              />
-              {!activeModule.completed && (
+              <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: formatContent(view.content || '') }} />
+              {!mod?.sections?.info.completed && (
                 <div className="mt-8 text-center">
                   {!infoRead ? (
-                    <button
-                      onClick={() => setInfoRead(true)}
-                      className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-yellow-400 transition"
-                    >
+                    <button onClick={() => setInfoRead(true)} className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-yellow-400">
                       He terminado de leer
                     </button>
                   ) : (
-                    <button
-                      onClick={() => handleCompleteInfo(activeModule.id)}
-                      className="bg-green-500 text-white font-bold py-3 px-8 rounded-xl hover:bg-green-400 transition"
-                    >
-                      Completar modulo
+                    <button onClick={() => handleCompleteInfo(mod!.id)} className="bg-green-500 text-white font-bold py-3 px-8 rounded-xl hover:bg-green-400">
+                      Completar y continuar
                     </button>
                   )}
-                </div>
-              )}
-              {activeModule.completed && (
-                <div className="mt-8 text-center">
-                  <span className="text-green-400 font-bold text-lg">Completado</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* Video Module */}
-          {activeModule.type === 'video' && (
+          {/* Video */}
+          {view.step === 'video' && 'videoUrl' in view && mod && (
             <VideoModule
-              moduleId={activeModule.id}
-              videoUrl={activeModule.videoUrl || ''}
-              completed={activeModule.completed}
-              progress={activeModule.videoProgress}
-              onComplete={() => loadChapter().then(() => setActiveModule(null))}
+              moduleId={mod.id}
+              videoUrl={view.videoUrl}
+              completed={!!mod.sections?.video.completed}
+              progress={mod.sections?.video.progress || 0}
+              onComplete={() => handleVideoComplete(mod.id)}
             />
           )}
 
-          {/* Quiz / Final Exam */}
-          {(activeModule.type === 'quiz' || activeModule.type === 'final_exam') && (
+          {/* Quiz (module quiz) */}
+          {view.step === 'quiz' && mod && (
             <ChapterQuiz
-              moduleId={activeModule.id}
-              type={activeModule.type}
-              lives={activeModule.livesRemaining}
-              lockedUntil={activeModule.lockedUntil}
-              completed={activeModule.completed}
-              bestScore={activeModule.score}
+              moduleId={mod.id}
+              type="quiz"
+              lives={mod.livesRemaining}
+              lockedUntil={mod.lockedUntil}
+              completed={!!mod.sections?.quiz.completed}
+              bestScore={mod.sections?.quiz.score || 0}
+              isPremium={chapter.isPremium}
+              chapterId={chapter.id}
+              chapterTitle={chapter.title}
+              onComplete={handleQuizComplete}
+            />
+          )}
+
+          {/* Final exam */}
+          {view.step === 'final_exam' && mod && (
+            <ChapterQuiz
+              moduleId={mod.id}
+              type="final_exam"
+              lives={mod.livesRemaining}
+              lockedUntil={mod.lockedUntil}
+              completed={mod.completed}
+              bestScore={mod.score}
               isPremium={chapter.isPremium}
               chapterId={chapter.id}
               chapterTitle={chapter.title}
@@ -181,112 +256,83 @@ export function ChapterFlow() {
     );
   }
 
-  // Chapter overview with 4 modules
+  // ── Chapter overview ─────────────────────────────────────────────────────
+
   return (
     <div className="min-h-screen bg-gray-900 pb-20">
-      {/* Chapter Header */}
-      <div className="relative">
-        {chapter.coverImage && (
-          <div
-            className="h-48 bg-cover bg-center"
-            style={{ backgroundImage: `url(${chapter.coverImage})` }}
-          >
-            <div className="h-full bg-gradient-to-b from-transparent to-gray-900" />
-          </div>
-        )}
-        <div className="px-4 py-6">
-          <button onClick={() => navigate('/chapters')} className="text-gray-400 hover:text-white mb-3 block">
-            &larr; Capítulos
-          </button>
-          <h1 className="text-2xl font-bold text-white mb-2">{chapter.title}</h1>
-          <p className="text-gray-400">{chapter.description}</p>
+      <div className="px-4 py-6">
+        <button onClick={() => navigate('/chapters')} className="text-gray-400 hover:text-white mb-3 block">&larr; Capitulos</button>
+        <h1 className="text-2xl font-bold text-white mb-2">{chapter.title}</h1>
+        <p className="text-gray-400">{chapter.description}</p>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-400">Progreso</span>
-              <span className="text-yellow-400 font-bold">{chapter.completionPercent}%</span>
-            </div>
-            <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full transition-all duration-500"
-                style={{ width: `${chapter.completionPercent}%` }}
-              />
-            </div>
+        <div className="mt-4">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-400">Progreso</span>
+            <span className="text-yellow-400 font-bold">{chapter.completionPercent}%</span>
+          </div>
+          <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full transition-all duration-500" style={{ width: `${chapter.completionPercent}%` }} />
           </div>
         </div>
       </div>
 
-      {/* 4 Modules */}
       <div className="px-4 space-y-4">
-        {chapter.modules.map((mod, index) => {
-          const icons: Record<string, string> = {
-            info: '\uD83D\uDCDA',
-            video: '\uD83C\uDFAC',
-            quiz: '\uD83D\uDCDD',
-            final_exam: '\uD83C\uDFC6',
-          };
-          const colors: Record<string, string> = {
-            info: 'from-blue-600 to-blue-500',
-            video: 'from-purple-600 to-purple-500',
-            quiz: 'from-orange-600 to-orange-500',
-            final_exam: 'from-yellow-600 to-yellow-500',
-          };
+        {chapter.modules.map((mod) => {
+          const isExam = mod.type === 'final_exam';
+          const s = mod.sections;
+          const sectionsDone = s ? [s.info.completed, s.video.completed || !s.video.hasVideo, s.quiz.completed].filter(Boolean).length : 0;
+          const sectionsTotal = s ? (s.video.hasVideo ? 3 : 2) : 0;
 
           return (
             <button
               key={mod.id}
-              onClick={() => mod.unlocked ? setActiveModule(mod) : null}
+              onClick={() => openModule(mod)}
               disabled={!mod.unlocked}
-              className={`w-full text-left rounded-xl p-4 transition-all duration-200 ${
+              className={`w-full text-left rounded-xl p-4 transition-all ${
                 mod.unlocked
                   ? 'bg-gray-800 hover:bg-gray-750 cursor-pointer border border-gray-700 hover:border-gray-600'
                   : 'bg-gray-800/50 opacity-50 cursor-not-allowed border border-gray-800'
               }`}
             >
               <div className="flex items-center gap-4">
-                {/* Module number circle */}
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br ${
-                    mod.completed ? 'from-green-500 to-green-400' : colors[mod.type]
-                  }`}
-                >
-                  {mod.completed ? '\u2714' : icons[mod.type]}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br ${
+                  mod.completed ? 'from-green-500 to-green-400' : isExam ? 'from-yellow-600 to-yellow-500' : 'from-blue-600 to-blue-500'
+                }`}>
+                  {mod.completed ? '\u2714' : isExam ? '\uD83C\uDFC6' : mod.order}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 font-bold">MODULO {mod.order}</span>
-                    {mod.completed && (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                        Completado
-                      </span>
-                    )}
-                    {!mod.unlocked && (
-                      <span className="text-xs bg-gray-600/50 text-gray-400 px-2 py-0.5 rounded-full">
-                        Bloqueado
-                      </span>
-                    )}
+                    <span className="text-xs text-gray-500 font-bold">
+                      {isExam ? 'EXAMEN FINAL' : `MODULO ${mod.order}`}
+                    </span>
+                    {mod.completed && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Completado</span>}
+                    {!mod.unlocked && <span className="text-xs bg-gray-600/50 text-gray-400 px-2 py-0.5 rounded-full">Bloqueado</span>}
                   </div>
                   <h3 className="text-white font-semibold mt-0.5">{mod.title}</h3>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span>+{mod.xpReward} XP</span>
-                    {mod.hasQuiz && <span>Min. 80%</span>}
-                    {mod.type === 'video' && <span>90% para completar</span>}
-                    {mod.livesRemaining >= 0 && mod.hasQuiz && !mod.completed && (
-                      <span className="text-red-400">
-                        {mod.livesRemaining} {mod.livesRemaining === 1 ? 'vida' : 'vidas'}
-                      </span>
-                    )}
-                  </div>
+
+                  {/* Section progress for lesson modules */}
+                  {s && !mod.completed && mod.unlocked && (
+                    <div className="flex items-center gap-3 mt-2">
+                      <SectionDot done={s.info.completed} label="Lectura" icon={'\uD83D\uDCDA'} />
+                      {s.video.hasVideo && <SectionDot done={s.video.completed} label="Video" icon={'\uD83C\uDFAC'} />}
+                      <SectionDot done={s.quiz.completed} label="Quiz" icon={'\uD83D\uDCDD'} />
+                      <span className="text-xs text-gray-600 ml-auto">{sectionsDone}/{sectionsTotal}</span>
+                    </div>
+                  )}
+
+                  {isExam && (
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      <span>10 preguntas de los 3 modulos</span>
+                      <span>Min. 80%</span>
+                    </div>
+                  )}
                 </div>
 
                 {mod.score > 0 && (
-                  <div className="text-right">
-                    <span className={`text-lg font-bold ${mod.score >= 80 ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {mod.score}%
-                    </span>
-                  </div>
+                  <span className={`text-lg font-bold ${mod.score >= 80 ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {mod.score}%
+                  </span>
                 )}
               </div>
             </button>
@@ -297,18 +343,29 @@ export function ChapterFlow() {
   );
 }
 
+function SectionDot({ done, label, icon }: { done: boolean; label: string; icon: string }) {
+  return (
+    <div className={`flex items-center gap-1 text-xs ${done ? 'text-green-400' : 'text-gray-600'}`}>
+      <span>{icon}</span>
+      <span>{done ? '\u2714' : label}</span>
+    </div>
+  );
+}
+
 function formatContent(content: string): string {
   try {
     const parsed = JSON.parse(content);
     if (parsed.sections) {
-      return parsed.sections
-        .map((s: any) =>
-          `<h3>${s.icon || ''} ${s.title}</h3><p>${s.text}</p>`
-        )
-        .join('');
+      let html = parsed.sections.map((s: any) =>
+        `<h3>${s.icon || ''} ${s.title}</h3><p>${(s.text || '').replace(/\n/g, '<br/>')}</p>`
+      ).join('');
+      if (parsed.keyTerms?.length) {
+        html += '<h3>Términos clave</h3><ul>';
+        html += parsed.keyTerms.map((t: any) => `<li><strong>${t.term}</strong>: ${t.definition}</li>`).join('');
+        html += '</ul>';
+      }
+      return html;
     }
-  } catch {
-    // Not JSON, treat as HTML/text
-  }
+  } catch { /* not JSON */ }
   return content || '<p>No hay contenido disponible aún.</p>';
 }

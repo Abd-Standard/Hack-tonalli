@@ -120,6 +120,11 @@ export const apiService = {
     return res.data;
   },
 
+  getModuleContent: async (moduleId: string) => {
+    const res = await api.get(`/chapters/modules/${moduleId}/content`);
+    return res.data;
+  },
+
   completeInfoModule: async (moduleId: string) => {
     const res = await api.post(`/chapters/modules/${moduleId}/complete-info`);
     return res.data;

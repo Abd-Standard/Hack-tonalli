@@ -28,18 +28,30 @@ export declare class ChaptersService {
         xpReward: number;
         modules: {
             id: string;
-            type: "video" | "quiz" | "info" | "final_exam";
+            type: "lesson" | "final_exam";
             order: number;
             title: string;
-            content: string | undefined;
-            videoUrl: string | undefined;
-            hasQuiz: boolean;
             xpReward: number;
             unlocked: boolean;
             completed: boolean;
+            sections: {
+                info: {
+                    completed: boolean;
+                    hasContent: boolean;
+                };
+                video: {
+                    completed: boolean;
+                    progress: number;
+                    hasVideo: boolean;
+                };
+                quiz: {
+                    completed: boolean;
+                    score: number;
+                    attempts: number;
+                };
+            } | undefined;
             score: number;
             attempts: number;
-            videoProgress: number;
             livesRemaining: number;
             lockedUntil: string | null;
         }[];
@@ -51,10 +63,9 @@ export declare class ChaptersService {
     getQuizQuestions(moduleId: string, userId: string): Promise<{
         moduleId: string;
         chapterId: string;
-        type: "quiz" | "final_exam";
+        type: "lesson" | "final_exam";
         passingScore: number;
         totalQuestions: number;
-        attemptToken: string;
         questions: {
             id: string;
             question: string;
@@ -83,6 +94,7 @@ export declare class ChaptersService {
         xpEarned: number;
         livesRemaining: number;
         lockedUntil: string | null;
+        moduleCompleted: boolean;
         message: string;
     }>;
     reportQuizAbandon(moduleId: string, userId: string, reason: string): Promise<{
@@ -102,11 +114,14 @@ export declare class ChaptersService {
         unlocked: boolean;
         moduleId: string;
     }>;
-    getChapterCompletion(chapterId: string, userId: string): Promise<{
-        chapterId: string;
-        completedModules: number;
-        totalModules: number;
-        percent: number;
-        isFullyCompleted: boolean;
+    getModuleContent(moduleId: string): Promise<{
+        id: string;
+        type: "lesson" | "final_exam";
+        order: number;
+        title: string;
+        content: string;
+        videoUrl: string;
+        hasQuiz: boolean;
     }>;
+    private getOrCreateProgress;
 }

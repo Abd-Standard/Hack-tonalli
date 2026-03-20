@@ -22,11 +22,16 @@ let ChapterProgress = class ChapterProgress {
     chapterId;
     module;
     moduleId;
+    infoCompleted;
+    videoProgress;
+    videoCompleted;
+    quizCompleted;
+    quizScore;
+    quizAttempts;
     completed;
     score;
     attempts;
     lockedUntil;
-    videoProgress;
     xpEarned;
     completedAt;
     createdAt;
@@ -63,6 +68,30 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
+], ChapterProgress.prototype, "infoCompleted", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 0 }),
+    __metadata("design:type", Number)
+], ChapterProgress.prototype, "videoProgress", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], ChapterProgress.prototype, "videoCompleted", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], ChapterProgress.prototype, "quizCompleted", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 0 }),
+    __metadata("design:type", Number)
+], ChapterProgress.prototype, "quizScore", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 0 }),
+    __metadata("design:type", Number)
+], ChapterProgress.prototype, "quizAttempts", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
 ], ChapterProgress.prototype, "completed", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: 0 }),
@@ -76,10 +105,6 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
 ], ChapterProgress.prototype, "lockedUntil", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: 0 }),
-    __metadata("design:type", Number)
-], ChapterProgress.prototype, "videoProgress", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: 0 }),
     __metadata("design:type", Number)

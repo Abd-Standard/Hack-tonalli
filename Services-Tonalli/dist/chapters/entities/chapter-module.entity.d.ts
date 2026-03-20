@@ -3,7 +3,7 @@ export declare class ChapterModule {
     id: string;
     chapter: Chapter;
     chapterId: string;
-    type: 'info' | 'video' | 'quiz' | 'final_exam';
+    type: 'lesson' | 'final_exam';
     order: number;
     title: string;
     content: string;

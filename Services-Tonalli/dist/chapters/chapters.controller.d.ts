@@ -15,40 +15,53 @@ export declare class ChaptersController {
         xpReward: number;
         modules: {
             id: string;
-            type: "video" | "quiz" | "info" | "final_exam";
+            type: "lesson" | "final_exam";
             order: number;
             title: string;
-            content: string | undefined;
-            videoUrl: string | undefined;
-            hasQuiz: boolean;
             xpReward: number;
             unlocked: boolean;
             completed: boolean;
+            sections: {
+                info: {
+                    completed: boolean;
+                    hasContent: boolean;
+                };
+                video: {
+                    completed: boolean;
+                    progress: number;
+                    hasVideo: boolean;
+                };
+                quiz: {
+                    completed: boolean;
+                    score: number;
+                    attempts: number;
+                };
+            } | undefined;
             score: number;
             attempts: number;
-            videoProgress: number;
             livesRemaining: number;
             lockedUntil: string | null;
         }[];
         completionPercent: number;
         isPremium: boolean;
     }>;
-    getChapterCompletion(id: string, req: any): Promise<{
-        chapterId: string;
-        completedModules: number;
-        totalModules: number;
-        percent: number;
-        isFullyCompleted: boolean;
+    getModuleContent(moduleId: string): Promise<{
+        id: string;
+        type: "lesson" | "final_exam";
+        order: number;
+        title: string;
+        content: string;
+        videoUrl: string;
+        hasQuiz: boolean;
     }>;
     completeInfoModule(moduleId: string, req: any): Promise<import("./entities/chapter-progress.entity").ChapterProgress>;
     updateVideoProgress(moduleId: string, percent: number, req: any): Promise<import("./entities/chapter-progress.entity").ChapterProgress>;
     getQuizQuestions(moduleId: string, req: any): Promise<{
         moduleId: string;
         chapterId: string;
-        type: "quiz" | "final_exam";
+        type: "lesson" | "final_exam";
         passingScore: number;
         totalQuestions: number;
-        attemptToken: string;
         questions: {
             id: string;
             question: string;
@@ -77,6 +90,7 @@ export declare class ChaptersController {
         xpEarned: number;
         livesRemaining: number;
         lockedUntil: string | null;
+        moduleCompleted: boolean;
         message: string;
     }>;
     reportQuizAbandon(moduleId: string, reason: string, req: any): Promise<{

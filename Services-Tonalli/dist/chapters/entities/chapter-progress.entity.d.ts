@@ -9,11 +9,16 @@ export declare class ChapterProgress {
     chapterId: string;
     module: ChapterModule;
     moduleId: string;
+    infoCompleted: boolean;
+    videoProgress: number;
+    videoCompleted: boolean;
+    quizCompleted: boolean;
+    quizScore: number;
+    quizAttempts: number;
     completed: boolean;
     score: number;
     attempts: number;
     lockedUntil: Date;
-    videoProgress: number;
     xpEarned: number;
     completedAt: Date;
     createdAt: Date;

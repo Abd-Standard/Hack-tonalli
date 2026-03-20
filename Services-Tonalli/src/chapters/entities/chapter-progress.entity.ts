@@ -32,21 +32,38 @@ export class ChapterProgress {
   @Column()
   moduleId: string;
 
+  // ── Section progress (for lesson modules) ────────────────────────────────
+  @Column({ default: false })
+  infoCompleted: boolean;
+
+  @Column({ default: 0 })
+  videoProgress: number; // 0-100
+
+  @Column({ default: false })
+  videoCompleted: boolean;
+
+  @Column({ default: false })
+  quizCompleted: boolean;
+
+  @Column({ default: 0 })
+  quizScore: number;
+
+  @Column({ default: 0 })
+  quizAttempts: number;
+
+  // ── Overall module completion (all 3 sections done, or final exam passed) ─
   @Column({ default: false })
   completed: boolean;
 
   @Column({ default: 0 })
-  score: number;
+  score: number; // best quiz score
 
   @Column({ default: 0 })
-  attempts: number;
+  attempts: number; // total quiz attempts (for lives)
 
-  // For lives system: timestamp of last failed attempt when lives exhausted
+  // For lives system
   @Column({ nullable: true })
   lockedUntil: Date;
-
-  @Column({ default: 0 })
-  videoProgress: number; // 0-100 percent watched
 
   @Column({ default: 0 })
   xpEarned: number;

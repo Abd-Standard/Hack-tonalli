@@ -19,9 +19,10 @@ export class ChapterModule {
   @Column()
   chapterId: string;
 
-  // 1 = info, 2 = video, 3 = quiz, 4 = final_exam
+  // 'lesson' = modules 1-3 (has info + video + quiz)
+  // 'final_exam' = module 4 (comprehensive quiz only)
   @Column()
-  type: 'info' | 'video' | 'quiz' | 'final_exam';
+  type: 'lesson' | 'final_exam';
 
   @Column()
   order: number; // 1-4
@@ -29,15 +30,17 @@ export class ChapterModule {
   @Column({ nullable: true })
   title: string;
 
-  // For info module: JSON with sections and keyTerms
+  // ── Info section (for lesson modules) ────────────────────────────────────
+  // JSON with { sections: [...], keyTerms: [...] }
   @Column({ type: 'longtext', nullable: true })
   content: string;
 
-  // For video module: URL of the video
+  // ── Video section (for lesson modules) ───────────────────────────────────
   @Column({ nullable: true })
   videoUrl: string;
 
-  // For quiz/final_exam: JSON array of questions
+  // ── Quiz section (for lesson modules AND final_exam) ─────────────────────
+  // JSON array of questions
   @Column({ type: 'longtext', nullable: true })
   questionsPool: string;
 

@@ -34,8 +34,8 @@ let ChaptersController = class ChaptersController {
     getChapterWithProgress(id, req) {
         return this.chaptersService.getChapterWithProgress(id, req.user.id);
     }
-    getChapterCompletion(id, req) {
-        return this.chaptersService.getChapterCompletion(id, req.user.id);
+    getModuleContent(moduleId) {
+        return this.chaptersService.getModuleContent(moduleId);
     }
     completeInfoModule(moduleId, req) {
         return this.chaptersService.completeInfoModule(moduleId, req.user.id);
@@ -101,13 +101,12 @@ __decorate([
 ], ChaptersController.prototype, "getChapterWithProgress", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)(':id/completion'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Req)()),
+    (0, common_1.Get)('modules/:moduleId/content'),
+    __param(0, (0, common_1.Param)('moduleId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], ChaptersController.prototype, "getChapterCompletion", null);
+], ChaptersController.prototype, "getModuleContent", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('modules/:moduleId/complete-info'),

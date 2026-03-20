@@ -36,11 +36,11 @@ export class ChaptersController {
     return this.chaptersService.getChapterWithProgress(id, req.user.id);
   }
 
-  /** GET /api/chapters/:id/completion — chapter completion status */
+  /** GET /api/chapters/modules/:moduleId/content — get module info/video/quiz status */
   @UseGuards(JwtAuthGuard)
-  @Get(':id/completion')
-  getChapterCompletion(@Param('id') id: string, @Req() req: any) {
-    return this.chaptersService.getChapterCompletion(id, req.user.id);
+  @Get('modules/:moduleId/content')
+  getModuleContent(@Param('moduleId') moduleId: string) {
+    return this.chaptersService.getModuleContent(moduleId);
   }
 
   // ── Module progress endpoints ────────────────────────────────────────────

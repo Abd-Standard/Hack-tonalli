@@ -34,20 +34,25 @@ export interface Chapter {
   updatedAt: string;
 }
 
+export interface ModuleSections {
+  info: { completed: boolean; hasContent: boolean };
+  video: { completed: boolean; progress: number; hasVideo: boolean };
+  quiz: { completed: boolean; score: number; attempts: number };
+}
+
 export interface ChapterModuleData {
   id: string;
-  type: 'info' | 'video' | 'quiz' | 'final_exam';
+  type: 'lesson' | 'final_exam';
   order: number;
   title: string;
-  content?: string;
-  videoUrl?: string;
-  hasQuiz: boolean;
   xpReward: number;
   unlocked: boolean;
   completed: boolean;
+  // For lesson modules: 3 sections
+  sections?: ModuleSections;
+  // For final exam
   score: number;
   attempts: number;
-  videoProgress: number;
   livesRemaining: number; // -1 = unlimited (premium)
   lockedUntil: string | null;
 }
