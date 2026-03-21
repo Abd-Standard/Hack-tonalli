@@ -97,6 +97,11 @@ let UsersService = class UsersService {
             createdAt: user.createdAt,
         };
     }
+    async upgradeToPremium(userId) {
+        const user = await this.findById(userId);
+        user.isPremium = true;
+        return this.userRepository.save(user);
+    }
     async getRankings() {
         const users = await this.userRepository.find({
             order: { totalXp: 'DESC' },

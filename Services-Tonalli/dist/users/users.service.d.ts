@@ -12,5 +12,6 @@ export declare class UsersService {
     updateStreak(userId: string): Promise<User>;
     setupUser(userId: string, companion: string, avatarType: string): Promise<User>;
     getProfile(userId: string): Promise<any>;
+    upgradeToPremium(userId: string): Promise<User>;
     getRankings(): Promise<any[]>;
 }

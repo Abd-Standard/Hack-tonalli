@@ -12,5 +12,6 @@ export declare class UsersController {
         companion: string;
         avatarType: string;
     }): Promise<import("./entities/user.entity").User>;
+    upgradeToPremium(req: any): Promise<import("./entities/user.entity").User>;
     getRankings(): Promise<any[]>;
 }

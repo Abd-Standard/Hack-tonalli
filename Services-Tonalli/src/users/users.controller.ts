@@ -31,6 +31,12 @@ export class UsersController {
     return this.usersService.setupUser(req.user.id, body.companion, body.avatarType);
   }
 
+  @Patch('users/me/upgrade')
+  @UseGuards(JwtAuthGuard)
+  async upgradeToPremium(@Req() req) {
+    return this.usersService.upgradeToPremium(req.user.id);
+  }
+
   @Get('rankings')
   async getRankings() {
     return this.usersService.getRankings();

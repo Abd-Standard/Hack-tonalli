@@ -96,6 +96,12 @@ export class UsersService {
     };
   }
 
+  async upgradeToPremium(userId: string): Promise<User> {
+    const user = await this.findById(userId);
+    user.isPremium = true;
+    return this.userRepository.save(user);
+  }
+
   async getRankings(): Promise<any[]> {
     const users = await this.userRepository.find({
       order: { totalXp: 'DESC' },
