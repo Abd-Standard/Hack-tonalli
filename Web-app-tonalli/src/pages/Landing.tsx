@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, Users, BookOpen, Coins, Shield, Zap, Globe, Star } from 'lucide-react';
+import { useT } from '../hooks/useT';
 
 const fadeUp = {
   initial: { y: 32, opacity: 0 },
@@ -31,6 +32,7 @@ const starDots = [
 ];
 
 export function Landing() {
+  const t = useT();
   return (
     <div style={{ minHeight: '100vh' }}>
 
@@ -120,7 +122,7 @@ export function Landing() {
           {/* Stellar badge */}
           <div className="badge badge-gold" style={{ marginBottom: 20, gap: 6 }}>
             <Star size={11} fill="currentColor" />
-            Powered by Stellar Blockchain
+            {t('poweredByStellar')}
           </div>
 
           <h1 style={{
@@ -133,9 +135,9 @@ export function Landing() {
             letterSpacing: '-0.02em',
             color: 'var(--text)',
           }}>
-            Aprende Web3 en español
+            {t('heroTitle1')}
             <br />
-            <span className="gradient-text">y gana recompensas reales</span>
+            <span className="gradient-text">{t('heroTitle2')}</span>
           </h1>
 
           <p style={{
@@ -146,16 +148,15 @@ export function Landing() {
             lineHeight: 1.75,
             fontWeight: 400,
           }}>
-            La plataforma educativa Web3 para México y Latinoamérica.
-            Completa lecciones, pasa quizzes y gana XLM real en Stellar.
+            {t('heroDesc')}
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn-primary btn-lg">
-              Comenzar Ahora <ChevronRight size={18} />
+              {t('startNow')} <ChevronRight size={18} />
             </Link>
             <Link to="/login" className="btn btn-ghost btn-lg">
-              Entrar
+              {t('enter')}
             </Link>
           </div>
         </motion.div>
@@ -172,9 +173,9 @@ export function Landing() {
           transition={{ delay: 0.7 }}
         >
           {[
-            { icon: <Users size={16} />, value: '12,000+', label: 'Estudiantes activos' },
-            { icon: <BookOpen size={16} />, value: '40+',     label: 'Lecciones gratuitas' },
-            { icon: <Coins size={16} />,   value: '500 XLM',  label: 'Distribuidos en red' },
+            { icon: <Users size={16} />, value: '12,000+', label: t('activeStudents') },
+            { icon: <BookOpen size={16} />, value: '40+',     label: t('freeLessons') },
+            { icon: <Coins size={16} />,   value: '500 XLM',  label: t('distributedOnNet') },
           ].map((stat, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--gold)', justifyContent: 'center', marginBottom: 6 }}>
@@ -200,9 +201,9 @@ export function Landing() {
             style={{ textAlign: 'center', marginBottom: 52 }}
           >
             <h2 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 10, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-              Cómo funciona
+              {t('howItWorks')}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Tres pasos para convertirte en experto Web3</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{t('threeSteps')}</p>
           </motion.div>
 
           <motion.div
@@ -216,28 +217,28 @@ export function Landing() {
               {
                 step: '01',
                 icon: <BookOpen size={22} />,
-                title: 'Aprende',
+                title: t('stepLearn'),
                 accent: '#E91E8C',
-                description: 'Lecciones cortas sobre blockchain, Stellar, DeFi y NFTs. En español, con ejemplos aplicados a México y LATAM.',
-                cta: 'Chima te guía',
+                description: t('stepLearnDesc'),
+                cta: t('stepLearnCta'),
                 char: 'chima',
               },
               {
                 step: '02',
                 icon: <Zap size={22} />,
-                title: 'Completa quizzes',
+                title: t('stepQuiz'),
                 accent: '#F5A623',
-                description: 'Pon a prueba tu conocimiento. Cada respuesta correcta suma XP y te acerca a lecciones avanzadas.',
-                cta: 'Alli te desafía',
+                description: t('stepQuizDesc'),
+                cta: t('stepQuizCta'),
                 char: 'alli',
               },
               {
                 step: '03',
                 icon: <Coins size={22} />,
-                title: 'Gana recompensas',
+                title: t('stepEarn'),
                 accent: '#00D4AA',
-                description: 'Completa módulos y recibe XLM real en tu wallet Stellar. Además obtén certificados NFT on-chain.',
-                cta: 'Xollo cuida tu racha',
+                description: t('stepEarnDesc'),
+                cta: t('stepEarnCta'),
                 char: 'xollo',
               },
             ].map((feature, i) => (
@@ -269,7 +270,7 @@ export function Landing() {
                     {feature.icon}
                   </div>
                   <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-subtle)', letterSpacing: '0.1em' }}>
-                    PASO {feature.step}
+                    {t('step')} {feature.step}
                   </span>
                 </div>
 
@@ -311,9 +312,9 @@ export function Landing() {
             style={{ textAlign: 'center', marginBottom: 52 }}
           >
             <h2 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 10, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-              Conoce a tu equipo
+              {t('meetYourTeam')}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Tus compañeros en el viaje Web3</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{t('teamDesc')}</p>
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
@@ -321,28 +322,28 @@ export function Landing() {
               {
                 image: '/characters/chima.png',
                 name: 'Chima',
-                role: 'Guía Maestra',
+                role: t('chimaRole'),
                 accent: '#E91E8C',
                 glow: 'rgba(233,30,140,0.32)',
-                description: 'Mariachi de corazón, maestra de blockchain. Chima explica cada concepto con claridad y paciencia. Nunca te deja atrás.',
+                description: t('chimaDesc'),
                 animClass: 'float-animation',
               },
               {
                 image: '/characters/alli.png',
                 name: 'Alli',
-                role: 'Desafiador',
+                role: t('alliRole'),
                 accent: '#F5A623',
                 glow: 'rgba(245,166,35,0.32)',
-                description: 'El más competitivo del metaverso. Alli te reta constantemente a superar tus récords y mejorar tu racha.',
+                description: t('alliDesc'),
                 animClass: 'float-slow',
               },
               {
                 image: '/characters/xollo.png',
                 name: 'Xollo',
-                role: 'Guardián de Racha',
+                role: t('xolloRole'),
                 accent: '#00D4AA',
                 glow: 'rgba(0,212,170,0.32)',
-                description: 'El xoloescuincle más leal de la blockchain. Cuida tu racha diaria y celebra contigo cada logro.',
+                description: t('xolloDesc'),
                 animClass: 'float-delay',
               },
             ].map((char, i) => (
@@ -406,21 +407,21 @@ export function Landing() {
             style={{ textAlign: 'center', marginBottom: 44 }}
           >
             <h2 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 10, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-              Temario completo
+              {t('fullCurriculum')}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>De principiante a experto en Web3</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>{t('beginnerToExpert')}</p>
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
             {[
-              { icon: <Shield size={16} />,  topic: 'Blockchain Básico',   level: 'Principiante', accent: '#E91E8C' },
-              { icon: <Coins size={16} />,   topic: 'Stellar & XLM',       level: 'Principiante', accent: '#00D4AA' },
-              { icon: <Zap size={16} />,     topic: 'Wallets & Seguridad', level: 'Intermedio',   accent: '#F5A623' },
-              { icon: <Globe size={16} />,   topic: 'DeFi en México',      level: 'Intermedio',   accent: '#E91E8C' },
-              { icon: <Coins size={16} />,   topic: 'NFTs & Arte Digital', level: 'Avanzado',     accent: '#FFD60A' },
-              { icon: <Shield size={16} />,  topic: 'Smart Contracts',     level: 'Avanzado',     accent: '#00D4AA' },
-              { icon: <BookOpen size={16} />,topic: 'Trading Responsable', level: 'Intermedio',   accent: '#F5A623' },
-              { icon: <Globe size={16} />,   topic: 'Web3 y Sociedad',     level: 'Todos',        accent: '#E91E8C' },
+              { icon: <Shield size={16} />,  topic: t('topicBlockchain'),   level: t('levelBeginner'), accent: '#E91E8C' },
+              { icon: <Coins size={16} />,   topic: t('topicStellar'),      level: t('levelBeginner'), accent: '#00D4AA' },
+              { icon: <Zap size={16} />,     topic: t('topicWallets'),      level: t('levelIntermediate'), accent: '#F5A623' },
+              { icon: <Globe size={16} />,   topic: t('topicDefi'),         level: t('levelIntermediate'), accent: '#E91E8C' },
+              { icon: <Coins size={16} />,   topic: t('topicNfts'),         level: t('levelAdvanced'),     accent: '#FFD60A' },
+              { icon: <Shield size={16} />,  topic: t('topicSmartContracts'), level: t('levelAdvanced'),   accent: '#00D4AA' },
+              { icon: <BookOpen size={16} />,topic: t('topicTrading'),      level: t('levelIntermediate'), accent: '#F5A623' },
+              { icon: <Globe size={16} />,   topic: t('topicWeb3Society'),  level: t('levelAll'),          accent: '#E91E8C' },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -468,14 +469,14 @@ export function Landing() {
           </div>
 
           <h2 style={{ fontSize: '2.2rem', fontWeight: 700, marginBottom: 14, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-            Xollo está esperándote
+            {t('xolloWaiting')}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: 440, margin: '0 auto 32px', lineHeight: 1.7 }}>
-            Únete a miles de usuarios que ya están aprendiendo Web3 y ganando recompensas reales en Stellar.
+            {t('joinThousands')}
           </p>
 
           <Link to="/register" className="btn btn-primary btn-lg pulse-glow">
-            Crear cuenta gratis <ChevronRight size={18} />
+            {t('createFreeAccount')} <ChevronRight size={18} />
           </Link>
           <p style={{ marginTop: 14, color: 'var(--text-subtle)', fontSize: '0.8rem' }}>
 

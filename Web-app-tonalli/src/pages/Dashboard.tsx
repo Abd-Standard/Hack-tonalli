@@ -6,12 +6,14 @@ import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { apiService } from '../services/api';
 import type { LeaderboardEntry } from '../types';
+import { useT } from '../hooks/useT';
 
 
 
 export function Dashboard() {
   const { user, setUser } = useAuthStore();
   const { loadModules, dailyStreak } = useProgressStore();
+  const t = useT();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [chapters, setChapters] = useState<any[]>([]);
 
@@ -86,8 +88,8 @@ export function Dashboard() {
                 />
               </div>
               <div>
-                <div style={{ fontWeight: 900 }}>Hola, {user.username}!</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Nivel {level} · {user.city}</div>
+                <div style={{ fontWeight: 900 }}>{t('hello')}, {user.username}!</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('level')} {level} · {user.city}</div>
               </div>
             </div>
 
@@ -102,7 +104,7 @@ export function Dashboard() {
                   )}
                   <span style={{ fontWeight: 900, fontSize: '1.3rem', color: 'var(--primary)' }}>{streak}</span>
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>dias seguidos</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('daysStreak')}</div>
               </div>
 
               {/* XP */}
@@ -111,7 +113,7 @@ export function Dashboard() {
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Zap size={12} color="#FFD700" /> {totalXp} XP
                   </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Niv. {level + 1}: {xpToNextLevel}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('levelShort')} {level + 1}: {xpToNextLevel}</span>
                 </div>
                 <div className="progress-bar" style={{ height: 8 }}>
                   <div className="progress-fill" style={{ width: `${xpProgress}%` }} />
@@ -121,7 +123,7 @@ export function Dashboard() {
               {/* XLM */}
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--accent)' }}>{user.xlmEarned || 0} XLM</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ganados</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('earned')}</div>
               </div>
             </div>
           </div>
@@ -153,26 +155,26 @@ export function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <img src="/characters/xollo.png" alt="Xollo" style={{ width: 50, height: 50, objectFit: 'contain' }} className="float-animation" />
                   <div>
-                    <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>Desafio Diario</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Completa 1 modulo hoy para mantener tu racha</div>
+                    <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>{t('dailyChallenge')}</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('completeModule')}</div>
                   </div>
                 </div>
-                <Link to={`/chapters/${firstAvailableChapter.id}`} className="btn btn-primary">
-                  Acepto el reto! <ChevronRight size={16} />
+                <Link to={`/chapters/${firstAvailableChapter.moduleTag || firstAvailableChapter.id}`} className="btn btn-primary">
+                  {t('acceptChallenge')} <ChevronRight size={16} />
                 </Link>
               </motion.div>
             )}
 
             {/* Chapters path */}
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 8, textAlign: 'center' }}>Tu camino de aprendizaje</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 8, textAlign: 'center' }}>{t('learningPath')}</h2>
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginBottom: 24, fontSize: '0.9rem' }}>
-              {chapters.filter((c: any) => c.accessible).length} de {chapters.length} capitulos disponibles
-              {!user?.isPremium && <span style={{ color: '#f59e0b' }}> · Free: 1 por semana</span>}
+              {chapters.filter((c: any) => c.accessible).length} {t('chaptersAvailableOf')} {chapters.length} {t('chaptersAvailableCount')}
+              {!user?.isPremium && <span style={{ color: '#f59e0b' }}> · {t('freePlanLimit')}</span>}
             </p>
 
             {chapters.length === 0 && (
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                Cargando capitulos...
+                {t('loadingChaptersAlt')}
               </div>
             )}
 
@@ -186,7 +188,7 @@ export function Dashboard() {
                   transition={{ delay: i * 0.08 }}
                 >
                   <Link
-                    to={ch.accessible !== false ? `/chapters/${ch.id}` : '#'}
+                    to={ch.accessible !== false ? `/chapters/${ch.moduleTag || ch.id}` : '#'}
                     style={{ textDecoration: 'none', color: 'inherit' }}
                     onClick={(e) => { if (ch.accessible === false) e.preventDefault(); }}
                   >
@@ -220,13 +222,13 @@ export function Dashboard() {
                           {ch.moduleTag && <span style={{ color: 'var(--accent)' }}>{ch.moduleTag}</span>}
                           <span>{ch.estimatedMinutes || 15} min</span>
                           <span>+{ch.xpReward} XP</span>
-                          {ch.releaseWeek && <span>Semana {ch.releaseWeek}</span>}
+                          {ch.releaseWeek && <span>{t('weekLabel')} {ch.releaseWeek}</span>}
                         </div>
                         {ch.accessible === false && (
                           <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 4 }}>
                             {ch.lockedReason === 'free_locked'
-                              ? 'Hazte Premium para acceso anticipado'
-                              : 'Disponible proximamente'}
+                              ? t('getPremiumEarlyAccess')
+                              : t('comingSoon')}
                           </div>
                         )}
                       </div>
@@ -258,10 +260,10 @@ export function Dashboard() {
                 style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 12px', display: 'block' }}
               />
               <div style={{ fontWeight: 900, fontSize: '1.1rem', marginBottom: 4 }}>
-                {streak > 0 ? `${streak} dias seguidos!` : 'Empieza tu racha!'}
+                {streak > 0 ? `${streak} ${t('daysStreak')}!` : t('startYourStreak')}
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 12 }}>
-                {streak > 0 ? 'Xollo esta muy orgulloso de ti' : 'Completa una leccion para que Xollo este feliz'}
+                {streak > 0 ? t('xolloProud') : t('xolloHappy')}
               </div>
               <div style={{
                 background: streak > 0 ? 'rgba(46,139,63,0.15)' : 'rgba(155,89,182,0.15)',
@@ -269,7 +271,7 @@ export function Dashboard() {
                 fontSize: '0.85rem', fontWeight: 700,
                 color: streak > 0 ? 'var(--primary)' : '#9B59B6',
               }}>
-                {streak > 0 ? 'Racha activa' : 'Sin racha'}
+                {streak > 0 ? t('activeStreak') : t('noStreak')}
               </div>
             </motion.div>
 
@@ -282,7 +284,7 @@ export function Dashboard() {
                 className="card"
               >
                 <div style={{ fontWeight: 900, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Stellar Wallet
+                  {t('stellarWallet')}
                 </div>
                 <div style={{
                   background: 'var(--background)',
@@ -296,7 +298,7 @@ export function Dashboard() {
                   {user.walletAddress}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
-                  Red: Stellar Testnet
+                  {t('stellarNetwork')}
                 </div>
               </motion.div>
             )}
@@ -313,13 +315,13 @@ export function Dashboard() {
                   <Trophy size={18} color="var(--accent)" /> Ranking
                 </div>
                 <Link to="/leaderboard" style={{ fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>
-                  Ver todo
+                  {t('seeAll')}
                 </Link>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {leaderboard.length === 0 && (
                   <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: 12 }}>
-                    Se el primero en el ranking!
+                    {t('beFirstOnLeaderboard')}
                   </div>
                 )}
                 {leaderboard.slice(0, 5).map((entry) => (
@@ -361,7 +363,7 @@ export function Dashboard() {
                 className="card"
               >
                 <div style={{ fontWeight: 900, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Mis NFTs
+                  {t('myNfts')}
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   {user.nftCertificates.slice(0, 2).map((nft) => (
@@ -379,7 +381,7 @@ export function Dashboard() {
                   ))}
                 </div>
                 <Link to="/profile" style={{ display: 'block', textAlign: 'center', marginTop: 10, color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
-                  Ver todos
+                  {t('seeAllNfts')}
                 </Link>
               </motion.div>
             )}

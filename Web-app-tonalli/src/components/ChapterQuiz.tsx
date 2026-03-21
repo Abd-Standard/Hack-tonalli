@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../services/api';
 import { LivesIndicator } from './LivesIndicator';
 import { useIssueCertificate } from '../hooks/useIssueCertificate';
+import { useT } from '../hooks/useT';
 import type { QuizQuestion } from '../types';
 
 interface Props {
@@ -19,7 +20,7 @@ interface Props {
 
 export function ChapterQuiz({
   moduleId, type, lives, lockedUntil, completed, bestScore,
-  isPremium, chapterId: _chapterId, chapterTitle: _chapterTitle, onComplete,
+  isPremium, chapterId, chapterTitle, onComplete,
 }: Props) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
@@ -34,12 +35,13 @@ export function ChapterQuiz({
   const [showWarning, setShowWarning] = useState(false);
   const [certResult, setCertResult] = useState<any>(null);
   const { issueCertificate, issuing: issuingCert } = useIssueCertificate();
+  const t = useT();
 
   // Ref to track if quiz is active (avoid stale closure issues)
   const quizActiveRef = useRef(false);
   const abandoningRef = useRef(false);
 
-  const isLocked = lives === 0 && !!lockedUntil;
+  const isLocked = false; // No more 24h lock; module gets reset instead
 
   // ── Anti-cheat: report abandon and reset quiz ────────────────────────────
   const handleAbandon = useCallback(async (reason: string) => {
@@ -141,13 +143,35 @@ export function ChapterQuiz({
       }
     };
 
-    // 6. Keyboard shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U)
+    // 6. Keyboard shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U, PrintScreen, Ctrl+P, Meta+Shift+3/4/5)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!quizActiveRef.current) return;
+
+      // Screenshot keys
+      const isScreenshot =
+        e.key === 'PrintScreen' ||
+        (e.metaKey && e.shiftKey && ['3', '4', '5', 's', 'S'].includes(e.key)) || // Mac
+        (e.ctrlKey && e.shiftKey && ['s', 'S'].includes(e.key)); // Win Snip
+
+      if (isScreenshot) {
+        e.preventDefault();
+        setViolations((v) => {
+          const newV = v + 1;
+          if (newV >= 2) {
+            handleAbandon('screenshot_attempt');
+          } else {
+            setShowWarning(true);
+            setTimeout(() => setShowWarning(false), 3500);
+          }
+          return newV;
+        });
+        return;
+      }
+
       const blocked =
         e.key === 'F12' ||
         (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
-        (e.ctrlKey && ['u', 'U'].includes(e.key));
+        (e.ctrlKey && ['u', 'U', 'p', 'P'].includes(e.key)); // added Ctrl+P (print)
 
       if (blocked) {
         e.preventDefault();
@@ -245,7 +269,6 @@ export function ChapterQuiz({
             console.warn('Certificate issuance failed:', e);
           }
         }
-        onComplete();
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al enviar respuestas');
@@ -253,39 +276,187 @@ export function ChapterQuiz({
     setLoading(false);
   };
 
+  const isExam = type === 'final_exam';
+
+  const btnPrimary: React.CSSProperties = {
+    background: 'linear-gradient(135deg, #E91E8C, #F5A623)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 12,
+    padding: '13px 24px',
+    fontWeight: 800,
+    fontSize: '0.95rem',
+    cursor: 'pointer',
+    boxShadow: '0 4px 16px rgba(233,30,140,0.3)',
+    letterSpacing: '0.01em',
+  };
+
+  const btnGhost: React.CSSProperties = {
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    padding: '13px 24px',
+    fontWeight: 700,
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+  };
+
   // ── Abandon penalty screen ───────────────────────────────────────────────
-  if (abandonResult?.penalized) {
+  // ── Results screen must be checked FIRST (before !started checks) ────────
+  if (result) {
+    const pointsPerQ = result.totalQuestions > 0 ? Math.round(100 / result.totalQuestions) : 0;
+    const passed = result.passed;
+    const scoreColor = passed ? '#00D4AA' : '#E91E8C';
+
+    if (result.mustRedoModule) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔄</div>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#E91E8C', marginBottom: 8 }}>
+            Agotaste tus 2 intentos
+          </h3>
+          <p style={{ fontSize: '2.8rem', fontWeight: 900, color: '#E91E8C', marginBottom: 20 }}>
+            {result.score}%
+          </p>
+          <div style={{
+            background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.3)',
+            borderRadius: 12, padding: '16px 20px', maxWidth: 400, margin: '0 auto 24px',
+          }}>
+            <p style={{ color: '#F5A623', fontWeight: 700, marginBottom: 8 }}>{t('moduleReset')}</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>
+              Como usuario gratuito tienes 2 intentos por módulo. Has agotado ambos y el módulo ha sido reiniciado automáticamente.
+            </p>
+          </div>
+          {result.message && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 24 }}>{result.message}</p>
+          )}
+          <button onClick={onComplete} style={btnPrimary}>{t('resetModule')}</button>
+        </div>
+      );
+    }
+
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">{'\u26A0\uFE0F'}</div>
-        <h3 className="text-red-400 text-xl font-bold mb-4">Quiz cancelado</h3>
-        <p className="text-gray-300 mb-2">{abandonResult.message}</p>
-        <p className="text-gray-500 text-sm mb-6">
-          Salir de la ventana del quiz durante un intento cuenta como una vida perdida.
-          Las preguntas se regeneran en cada intento.
-        </p>
-        {abandonResult.livesRemaining !== undefined && (
-          <div className="mb-6">
-            <LivesIndicator
-              lives={abandonResult.livesRemaining}
-              lockedUntil={abandonResult.lockedUntil}
-            />
+      <div style={{ userSelect: 'none' }}>
+        <div style={{ textAlign: 'center', padding: '32px 0 24px' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>{passed ? '🎉' : '😔'}</div>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 12 }}>
+            {passed ? t('passed') : t('failed')}
+          </h3>
+          <div style={{ fontSize: '4rem', fontWeight: 900, color: scoreColor, lineHeight: 1, marginBottom: 8, textShadow: `0 0 32px ${scoreColor}60` }}>
+            {result.score}%
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: 6 }}>
+            {result.correctCount} de {result.totalQuestions} {t('correct')}
+          </p>
+          <p style={{ color: 'var(--text-subtle)', fontSize: '0.8rem', marginBottom: 16 }}>
+            {t('pointsWorth')} <strong style={{ color: scoreColor }}>{pointsPerQ} {t('pts')}</strong>
+          </p>
+          {result.xpEarned > 0 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)', borderRadius: 20, padding: '6px 16px', marginBottom: 12 }}>
+              <span style={{ color: '#F5A623', fontWeight: 800 }}>+{result.xpEarned} XP</span>
+            </div>
+          )}
+          {result.message && <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>{result.message}</p>}
+        </div>
+
+        <div style={{
+          background: passed ? 'rgba(0,212,170,0.08)' : 'rgba(233,30,140,0.08)',
+          border: `1px solid ${passed ? 'rgba(0,212,170,0.3)' : 'rgba(233,30,140,0.3)'}`,
+          borderRadius: 12, padding: '12px 18px', marginBottom: 20, textAlign: 'center',
+        }}>
+          <p style={{ color: scoreColor, fontWeight: 700, fontSize: '0.9rem', margin: 0 }}>
+            {passed
+              ? t('passedBar')
+              : `✗ ${t('needMinimum')} 80% ${t('toPass')} (${result.score}%)`}
+          </p>
+        </div>
+
+        {certResult?.success && (
+          <div style={{ background: 'linear-gradient(135deg, rgba(245,166,35,0.08), rgba(245,120,35,0.08))', border: '1px solid rgba(245,166,35,0.3)', borderRadius: 14, padding: '20px', marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏆</div>
+            <h4 style={{ color: '#F5A623', fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>Certificado Emitido</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 12 }}>Certificado validado en Stellar Blockchain</p>
+            <a href="/certificates" style={{ color: '#F5A623', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}>Ver mis certificados →</a>
           </div>
         )}
-        {(abandonResult.livesRemaining > 0 || abandonResult.livesRemaining === -1) && (
-          <button
-            onClick={() => { setAbandonResult(null); startQuiz(); }}
-            className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-yellow-400"
-          >
-            Intentar de nuevo (preguntas nuevas)
-          </button>
+        {issuingCert && (
+          <div style={{ textAlign: 'center', color: '#F5A623', fontSize: '0.85rem', marginBottom: 16 }}>
+            ⏳ Emitiendo certificado en Stellar...
+          </div>
         )}
-        <button
-          onClick={() => { setAbandonResult(null); onComplete(); }}
-          className="block mx-auto mt-4 text-gray-400 hover:text-white"
-        >
-          Volver al capitulo
-        </button>
+
+        {result.livesRemaining !== undefined && result.livesRemaining >= 0 && !passed && (
+          <div style={{ marginBottom: 20 }}>
+            <LivesIndicator lives={result.livesRemaining} lockedUntil={result.lockedUntil} />
+            {result.livesRemaining === 1 && !isPremium && (
+              <p style={{ color: '#E91E8C', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center', marginTop: 8 }}>
+                {t('lastAttemptWarning')}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+          {!passed && result.livesRemaining !== 0 && (
+            <button onClick={startQuiz} style={btnPrimary}>{t('retryQuiz')}</button>
+          )}
+          <button onClick={onComplete} style={btnGhost}>{t('backToChapter')}</button>
+        </div>
+
+        <div>
+          <h4 style={{ fontWeight: 800, marginBottom: 16, fontSize: '0.95rem', color: 'var(--text)' }}>{t('answerReview')}</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {result.results?.map((r: any, i: number) => (
+              <div key={i} style={{
+                padding: '12px 16px', borderRadius: 10,
+                background: r.correct ? 'rgba(0,212,170,0.07)' : 'rgba(233,30,140,0.07)',
+                border: `1px solid ${r.correct ? 'rgba(0,212,170,0.25)' : 'rgba(233,30,140,0.25)'}`,
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+              }}>
+                <span style={{ color: r.correct ? '#00D4AA' : '#E91E8C', fontWeight: 900, flexShrink: 0 }}>
+                  {r.correct ? '✓' : '✗'}
+                </span>
+                <div>
+                  <p style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--text)', margin: '0 0 4px' }}>
+                    {t('question')} {i + 1} — {r.correct ? `+${pointsPerQ} ${t('pts')}` : `0 ${t('pts')}`}
+                  </p>
+                  {r.explanation && (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{r.explanation}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (abandonResult?.penalized) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>⚠️</div>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#E91E8C', marginBottom: 8 }}>{t('quizCancelled')}</h3>
+        <p style={{ color: 'var(--text-muted)', marginBottom: 6 }}>{abandonResult.message}</p>
+        <p style={{ color: 'var(--text-subtle)', fontSize: '0.82rem', marginBottom: 24 }}>
+          {t('rule5')}
+        </p>
+        {abandonResult.livesRemaining !== undefined && (
+          <div style={{ marginBottom: 24 }}>
+            <LivesIndicator lives={abandonResult.livesRemaining} lockedUntil={abandonResult.lockedUntil} />
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+          {(abandonResult.livesRemaining > 0 || abandonResult.livesRemaining === -1) && (
+            <button onClick={() => { setAbandonResult(null); startQuiz(); }} style={btnPrimary}>
+              {t('retryAgain')} →
+            </button>
+          )}
+          <button onClick={() => { setAbandonResult(null); onComplete(); }} style={btnGhost}>
+            {t('backToChapter')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -293,18 +464,13 @@ export function ChapterQuiz({
   // ── Locked screen ────────────────────────────────────────────────────────
   if (isLocked) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">{'\uD83D\uDD12'}</div>
-        <h3 className="text-white text-xl font-bold mb-4">Quiz bloqueado</h3>
+      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>🔒</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginBottom: 12 }}>{t('quizCancelled')}</h3>
         <LivesIndicator lives={0} lockedUntil={lockedUntil} />
-        <p className="text-gray-400 mt-4">
-          Se agotaron tus vidas. Espera para intentar de nuevo.
+        <p style={{ color: 'var(--text-muted)', marginTop: 16, fontSize: '0.88rem' }}>
+          Se agotaron tus intentos. El módulo ha sido reiniciado.
         </p>
-        {!isPremium && (
-          <p className="text-yellow-400 text-sm mt-2">
-            Los usuarios Premium tienen vidas ilimitadas
-          </p>
-        )}
       </div>
     );
   }
@@ -312,18 +478,17 @@ export function ChapterQuiz({
   // ── Already completed ────────────────────────────────────────────────────
   if (completed && !started) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">{'\u2705'}</div>
-        <h3 className="text-white text-xl font-bold mb-2">
-          {type === 'final_exam' ? 'Examen final aprobado' : 'Quiz aprobado'}
+      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: '50%', margin: '0 auto 20px',
+          background: 'rgba(0,212,170,0.12)', border: '2px solid rgba(0,212,170,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem',
+        }}>✓</div>
+        <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginBottom: 6 }}>
+          {isExam ? t('examApproved') : t('quizApproved')}
         </h3>
-        <p className="text-green-400 text-2xl font-bold">{bestScore}%</p>
-        <button
-          onClick={startQuiz}
-          className="mt-6 bg-gray-700 text-white py-2 px-6 rounded-xl hover:bg-gray-600"
-        >
-          Intentar de nuevo
-        </button>
+        <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#00D4AA', marginBottom: 24 }}>{bestScore}%</p>
+        <button onClick={startQuiz} style={btnGhost}>{t('retryAgain')}</button>
       </div>
     );
   }
@@ -331,119 +496,105 @@ export function ChapterQuiz({
   // ── Pre-start screen ─────────────────────────────────────────────────────
   if (!started) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">
-          {type === 'final_exam' ? '\uD83C\uDFC6' : '\uD83D\uDCDD'}
-        </div>
-        <h3 className="text-white text-xl font-bold mb-2">
-          {type === 'final_exam' ? 'Examen Final' : 'Quiz de Evaluacion'}
-        </h3>
-        <p className="text-gray-400 mb-2">Necesitas 80% para aprobar</p>
-        <div className="mb-4">
-          <LivesIndicator lives={lives} lockedUntil={null} />
-        </div>
-
-        {/* Anti-cheat rules */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6 text-left max-w-md mx-auto">
-          <h4 className="text-yellow-400 font-bold text-sm mb-2">{'\u26A0\uFE0F'} Reglas del quiz:</h4>
-          <ul className="text-gray-400 text-xs space-y-1">
-            <li>{'\u2022'} No cambies de pestaña ni minimices la ventana</li>
-            <li>{'\u2022'} No uses copiar/pegar ni click derecho</li>
-            <li>{'\u2022'} No abras las herramientas de desarrollador</li>
-            <li>{'\u2022'} Salir del quiz = pierdes una vida</li>
-            <li>{'\u2022'} Las preguntas cambian en cada intento</li>
-          </ul>
-        </div>
-
-        {error && <p className="text-red-400 mb-4">{error}</p>}
-        <button
-          onClick={startQuiz}
-          disabled={loading}
-          className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-yellow-400 disabled:opacity-50"
-        >
-          {loading ? 'Cargando...' : 'Comenzar'}
-        </button>
-      </div>
-    );
-  }
-
-  // ── Results screen ───────────────────────────────────────────────────────
-  if (result) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">
-          {result.passed ? '\uD83C\uDF89' : '\uD83D\uDE14'}
-        </div>
-        <h3 className="text-white text-2xl font-bold mb-2">
-          {result.passed ? 'Aprobaste!' : 'No aprobaste'}
-        </h3>
-        <p className={`text-3xl font-bold mb-4 ${result.passed ? 'text-green-400' : 'text-red-400'}`}>
-          {result.score}%
-        </p>
-        <p className="text-gray-400 mb-2">
-          {result.correctCount} de {result.totalQuestions} correctas
-        </p>
-        {result.xpEarned > 0 && (
-          <p className="text-yellow-400 font-bold">+{result.xpEarned} XP</p>
-        )}
-        <p className="text-gray-300 mt-4">{result.message}</p>
-
-        {/* ACTA Certificate */}
-        {certResult?.success && (
-          <div className="mt-6 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl p-5">
-            <div className="text-3xl mb-2">{'\uD83C\uDFC6'}</div>
-            <h4 className="text-yellow-400 font-bold text-lg">Certificado ACTA Emitido</h4>
-            <p className="text-gray-400 text-sm mt-1">Certificado oficial validado en Stellar Blockchain</p>
-            <div className="mt-3 bg-gray-900/50 rounded-lg p-3 text-left">
-              <p className="text-xs text-gray-500">VC ID:</p>
-              <p className="text-xs text-gray-300 font-mono break-all">{certResult.vcId}</p>
-              <p className="text-xs text-gray-500 mt-2">TX Hash:</p>
-              <p className="text-xs text-gray-300 font-mono break-all">{certResult.txHash}</p>
-            </div>
-            <a href="/certificates" className="inline-block mt-3 text-sm text-yellow-400 hover:text-yellow-300 font-bold">
-              Ver mis certificados &rarr;
-            </a>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        {/* Icon + title */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
+            background: isExam ? 'rgba(245,166,35,0.12)' : 'rgba(233,30,140,0.12)',
+            border: `2px solid ${isExam ? 'rgba(245,166,35,0.3)' : 'rgba(233,30,140,0.3)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem',
+          }}>
+            {isExam ? '🏆' : '✏️'}
           </div>
-        )}
-        {issuingCert && (
-          <div className="mt-4 text-yellow-400 text-sm animate-pulse">
-            Emitiendo certificado ACTA en Stellar...
-          </div>
-        )}
-
-        {result.livesRemaining !== undefined && result.livesRemaining >= 0 && !result.passed && (
-          <div className="mt-4">
-            <LivesIndicator lives={result.livesRemaining} lockedUntil={result.lockedUntil} />
-          </div>
-        )}
-
-        <div className="mt-6 space-y-3">
-          {!result.passed && result.livesRemaining !== 0 && (
-            <button
-              onClick={startQuiz}
-              className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl hover:bg-yellow-400"
-            >
-              Intentar de nuevo (preguntas nuevas)
-            </button>
-          )}
-          <button
-            onClick={onComplete}
-            className="block mx-auto text-gray-400 hover:text-white"
-          >
-            Volver al capitulo
-          </button>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 6 }}>
+            {isExam ? t('finalExamTitle') : t('evaluationQuiz')}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            {t('needMinimum')} <strong style={{ color: '#F5A623' }}>80%</strong> {t('toPass')}
+          </p>
         </div>
 
-        {/* Question review */}
-        <div className="mt-8 text-left space-y-4">
-          <h4 className="text-white font-bold">Revision de respuestas:</h4>
-          {result.results?.map((r: any, i: number) => (
-            <div key={i} className={`p-3 rounded-lg ${r.correct ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
-              <p className="text-sm text-gray-300">{r.correct ? '\u2714' : '\u2718'} Pregunta {i + 1}</p>
-              {r.explanation && <p className="text-xs text-gray-400 mt-1">{r.explanation}</p>}
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          {[
+            { icon: '❓', label: `${isExam ? '20' : '5'} ${t('questionsCount')}` },
+            { icon: '🎯', label: t('minimum') },
+            { icon: '🔀', label: t('random') },
+          ].map((s, i) => (
+            <div key={i} style={{
+              flex: 1, background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: '12px 8px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '1.2rem', marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>{s.label}</div>
             </div>
           ))}
         </div>
+
+        {/* Lives / attempts */}
+        <div style={{
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '14px 18px', marginBottom: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>{t('availableAttempts')}</span>
+          <LivesIndicator lives={lives} lockedUntil={null} />
+        </div>
+
+        {/* Last attempt warning */}
+        {lives === 1 && !isPremium && (
+          <div style={{
+            background: 'rgba(233,30,140,0.08)', border: '1px solid rgba(233,30,140,0.3)',
+            borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+          }}>
+            <p style={{ color: '#E91E8C', fontWeight: 700, fontSize: '0.85rem', margin: 0, textAlign: 'center' }}>
+              {t('lastAttemptWarning')}
+            </p>
+          </div>
+        )}
+
+        {/* Rules */}
+        <div style={{
+          background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '14px 18px', marginBottom: 24,
+        }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            {t('quizRules')}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {[
+              t('rule1'),
+              t('rule2'),
+              t('rule3'),
+              t('rule4'),
+              t('rule5'),
+              t('rule6'),
+              ...(!isPremium ? [t('rule7')] : []),
+            ].map((rule, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ color: '#F5A623', flexShrink: 0, fontSize: '0.75rem', marginTop: 1 }}>•</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{rule}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ background: 'rgba(233,30,140,0.08)', border: '1px solid rgba(233,30,140,0.3)', borderRadius: 10, padding: '10px 14px', color: '#E91E8C', fontSize: '0.85rem', marginBottom: 16, textAlign: 'center' }}>
+            {error}
+          </div>
+        )}
+
+        <button onClick={startQuiz} disabled={loading} style={{
+          ...btnPrimary,
+          width: '100%',
+          padding: '15px 24px',
+          fontSize: '1rem',
+          opacity: loading ? 0.6 : 1,
+        }}>
+          {loading ? t('loadingQuestions') : isExam ? t('startExam') : t('startQuiz')}
+        </button>
       </div>
     );
   }
@@ -452,69 +603,153 @@ export function ChapterQuiz({
   const q = questions[currentQ];
   if (!q) return null;
 
+  const pct = Math.round(((currentQ + 1) / questions.length) * 100);
+  const OPTION_COLORS = ['#E91E8C', '#F5A623', '#00D4AA', '#7C6FCD'];
+  const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+
   return (
-    <div className="select-none" onCopy={(e) => e.preventDefault()}>
+    <div style={{ userSelect: 'none' }} onCopy={(e) => e.preventDefault()}>
       {/* Warning toast */}
       {showWarning && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg animate-pulse font-bold text-sm">
-          {'\u26A0\uFE0F'} Actividad sospechosa detectada. La proxima vez perderas una vida.
+        <div style={{
+          position: 'fixed', top: 72, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(233,30,140,0.97)', color: '#fff', borderRadius: 12,
+          padding: '12px 22px', fontWeight: 700, fontSize: '0.88rem',
+          zIndex: 9999, boxShadow: '0 4px 24px rgba(233,30,140,0.4)',
+          display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+        }}>
+          {t('suspiciousActivity')}
         </div>
       )}
 
-      {/* Anti-cheat status bar */}
-      <div className="flex items-center justify-between mb-4 bg-gray-800 rounded-lg px-3 py-2">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${violations === 0 ? 'bg-green-400' : violations === 1 ? 'bg-yellow-400' : 'bg-red-400'}`} />
-          <span className="text-xs text-gray-500">
-            {violations === 0 ? 'Sin infracciones' : `${violations} infraccion${violations > 1 ? 'es' : ''}`}
+      {/* Header: status + lives */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+        borderRadius: 12, padding: '10px 16px', marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: violations === 0 ? '#00D4AA' : violations === 1 ? '#F5A623' : '#E91E8C',
+          }} />
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            {violations === 0 ? t('noViolations') : `${violations} ${violations > 1 ? t('violations') : t('violation')}`}
           </span>
         </div>
         {!isPremium && (
-          <LivesIndicator lives={Math.max(0, (lives === -1 ? 3 : lives) - violations)} lockedUntil={null} />
+          <LivesIndicator lives={Math.max(0, (lives === -1 ? 2 : lives) - violations)} lockedUntil={null} />
         )}
       </div>
 
-      {/* Progress */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-yellow-500 rounded-full transition-all"
-            style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
-          />
+      {/* Progress bar */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            {t('question')} {currentQ + 1} de {questions.length}
+          </span>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: pct === 100 ? '#00D4AA' : '#F5A623' }}>
+            {pct}%
+          </span>
         </div>
-        <span className="text-gray-400 text-sm">{currentQ + 1}/{questions.length}</span>
+        <div style={{ height: 6, background: 'var(--bg-overlay)', borderRadius: 6, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: 6,
+            width: `${pct}%`,
+            background: 'linear-gradient(90deg, #E91E8C, #F5A623)',
+            transition: 'width 0.4s ease',
+          }} />
+        </div>
       </div>
 
-      {/* Question */}
-      <h3 className="text-white text-lg font-bold mb-6">{q.question}</h3>
-
-      {/* Options */}
-      <div className="space-y-3">
-        {q.options.map((opt, i) => (
-          <button
-            key={i}
-            onClick={() => handleSelect(i)}
-            className={`w-full text-left p-4 rounded-xl border transition-all ${
-              selected === i
-                ? 'border-yellow-500 bg-yellow-500/10 text-white'
-                : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600'
-            }`}
-          >
-            <span className="font-bold mr-3 text-gray-500">
-              {String.fromCharCode(65 + i)}.
-            </span>
-            {opt}
-          </button>
-        ))}
+      {/* Question card */}
+      <div style={{
+        background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+        borderRadius: 16, padding: '24px 24px 20px', marginBottom: 20,
+      }}>
+        <div style={{
+          fontSize: '0.68rem', fontWeight: 700, color: '#F5A623',
+          textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12,
+        }}>
+          {type === 'final_exam' ? '🏆 Examen Final' : '✏️ Quiz'}
+        </div>
+        <p style={{
+          fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.5,
+          color: 'var(--text)', margin: 0,
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}>
+          {q.question}
+        </p>
       </div>
 
-      {/* Next button */}
+      {/* Options — 2×2 grid on wide screens, vertical on narrow */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 12,
+        marginBottom: 24,
+      }}>
+        {q.options.map((opt, i) => {
+          const isSelected = selected === i;
+          const color = OPTION_COLORS[i % OPTION_COLORS.length];
+          return (
+            <button
+              key={i}
+              onClick={() => handleSelect(i)}
+              style={{
+                textAlign: 'left', borderRadius: 14, padding: '16px 16px',
+                background: isSelected ? `${color}15` : 'var(--bg-elevated)',
+                border: `2px solid ${isSelected ? color : 'var(--border)'}`,
+                cursor: 'pointer', transition: 'all 0.18s ease',
+                color: 'var(--text)', display: 'flex', alignItems: 'flex-start', gap: 12,
+                boxShadow: isSelected ? `0 0 0 3px ${color}20` : 'none',
+              }}
+            >
+              {/* Letter badge */}
+              <div style={{
+                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                background: isSelected ? color : 'var(--bg-overlay)',
+                border: `1.5px solid ${isSelected ? color : 'var(--border)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 900, fontSize: '0.85rem',
+                color: isSelected ? '#fff' : 'var(--text-muted)',
+                transition: 'all 0.18s ease',
+              }}>
+                {OPTION_LABELS[i]}
+              </div>
+              <span style={{
+                fontSize: '0.88rem', lineHeight: 1.45, fontWeight: isSelected ? 600 : 400,
+                color: isSelected ? 'var(--text)' : 'var(--text-muted)',
+                paddingTop: 5,
+              }}>
+                {opt}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Next / Finish button */}
       <button
         onClick={handleNext}
         disabled={selected === null || loading}
-        className="mt-6 w-full bg-yellow-500 text-gray-900 font-bold py-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50 transition"
+        style={{
+          width: '100%', padding: '14px 24px', borderRadius: 12, border: 'none',
+          background: selected !== null
+            ? 'linear-gradient(135deg, #E91E8C, #F5A623)'
+            : 'var(--bg-subtle)',
+          color: selected !== null ? '#fff' : 'var(--text-muted)',
+          fontWeight: 800, fontSize: '1rem', cursor: selected !== null ? 'pointer' : 'not-allowed',
+          boxShadow: selected !== null ? '0 4px 16px rgba(233,30,140,0.3)' : 'none',
+          transition: 'all 0.2s ease',
+          letterSpacing: '0.01em',
+        }}
       >
-        {loading ? 'Enviando...' : currentQ === questions.length - 1 ? 'Finalizar' : 'Siguiente'}
+        {loading
+          ? t('sending')
+          : currentQ === questions.length - 1
+            ? t('finish')
+            : t('next')}
       </button>
     </div>
   );

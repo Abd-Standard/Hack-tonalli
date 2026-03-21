@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, Zap, MapPin, Crown, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useT } from '../hooks/useT';
 import type { LeaderboardEntry, WeeklyLeaderboard } from '../types';
 
 const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
@@ -12,6 +14,8 @@ type Tab = 'global' | 'weekly' | 'city';
 
 export function Leaderboard() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const t = useT();
   const [tab, setTab] = useState<Tab>('global');
   const [globalData, setGlobalData] = useState<LeaderboardEntry[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyLeaderboard | null>(null);
@@ -20,8 +24,68 @@ export function Leaderboard() {
   const [weeklyError, setWeeklyError] = useState('');
 
   useEffect(() => {
-    loadData();
-  }, [tab]);
+    if (user?.isPremium) loadData();
+  }, [tab, user?.isPremium]);
+
+  // Premium gate — show upsell screen for free users
+  if (!user?.isPremium) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 20,
+            padding: '48px 36px',
+            maxWidth: 420,
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+          }}
+        >
+          <div style={{ fontSize: '4rem', marginBottom: 16 }}>🏆</div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: 12, color: 'var(--text)' }}>
+            {t('weeklyPodium')}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 32 }}>
+            {t('leaderboardPremiumDesc')}
+          </p>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            marginBottom: 32, padding: '12px 20px',
+            background: 'rgba(255,215,0,0.08)',
+            border: '1px solid rgba(255,215,0,0.2)',
+            borderRadius: 12,
+          }}>
+            <Lock size={16} color="#FFD700" />
+            <span style={{ fontSize: '0.85rem', color: '#FFD700', fontWeight: 600 }}>
+              {t('exclusivePremiumContent')}
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/premium')}
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #F5A623, #E91E8C)',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '1rem',
+              cursor: 'pointer',
+              letterSpacing: '0.01em',
+            }}
+          >
+            {t('seePremiumPlans')}
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   const loadData = async () => {
     setLoading(true);
@@ -35,7 +99,7 @@ export function Leaderboard() {
           setWeeklyData(data);
           setWeeklyError('');
         } catch (err: any) {
-          setWeeklyError(err.response?.data?.message || 'Solo usuarios Premium');
+          setWeeklyError(err.response?.data?.message || t('onlyPremiumUsers'));
         }
       } else if (tab === 'city') {
         const city = user?.city || 'Ciudad de México';
@@ -90,7 +154,7 @@ export function Leaderboard() {
           <span style={{ fontWeight: 900, fontSize: '0.95rem' }}>{entry.displayName || entry.username}</span>
           {entry.isPremium && <Crown size={14} color="#FFD700" />}
           {entry.isCurrentUser && (
-            <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>Tu</span>
+            <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>{t('you')}</span>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 2 }}>
@@ -130,31 +194,31 @@ export function Leaderboard() {
         textAlign: 'center',
       }}>
         <div style={{ fontSize: '4rem', marginBottom: 12 }}>{'\uD83C\uDFC6'}</div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>Rankings</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Los mejores estudiantes Web3 de Mexico</p>
+        <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>{t('leaderboard')}</h1>
+        <p style={{ color: 'var(--text-muted)' }}>{t('bestStudents')}</p>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}>
           {[
-            { key: 'global' as Tab, label: 'Global', icon: '\uD83C\uDF0D' },
-            { key: 'weekly' as Tab, label: 'Podio Semanal', icon: '\u2B50' },
-            { key: 'city' as Tab, label: `${user?.city || 'Ciudad'}`, icon: '\uD83D\uDCCD' },
-          ].map((t) => (
+            { key: 'global' as Tab, label: t('tabGlobal'), icon: '\uD83C\uDF0D' },
+            { key: 'weekly' as Tab, label: t('tabWeeklyPodium'), icon: '\u2B50' },
+            { key: 'city' as Tab, label: `${user?.city || t('profile')}`, icon: '\uD83D\uDCCD' },
+          ].map((tabItem) => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+              key={tabItem.key}
+              onClick={() => setTab(tabItem.key)}
               style={{
                 padding: '8px 16px',
                 borderRadius: 20,
-                border: tab === t.key ? '2px solid var(--accent)' : '1px solid var(--border)',
-                background: tab === t.key ? 'rgba(255,215,0,0.15)' : 'transparent',
-                color: tab === t.key ? 'var(--accent)' : 'var(--text-muted)',
-                fontWeight: tab === t.key ? 700 : 400,
+                border: tab === tabItem.key ? '2px solid var(--accent)' : '1px solid var(--border)',
+                background: tab === tabItem.key ? 'rgba(255,215,0,0.15)' : 'transparent',
+                color: tab === tabItem.key ? 'var(--accent)' : 'var(--text-muted)',
+                fontWeight: tab === tabItem.key ? 700 : 400,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
               }}
             >
-              {t.icon} {t.label}
+              {tabItem.icon} {tabItem.label}
             </button>
           ))}
         </div>
@@ -181,15 +245,15 @@ export function Leaderboard() {
         ) : tab === 'weekly' && weeklyError ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
             <Lock size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Podio Exclusivo Premium</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 8 }}>{t('exclusivePremiumPodium')}</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>{weeklyError}</p>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Hazte Premium para competir por recompensas semanales en XLM
+              {t('getPremiumForRewards')}
             </p>
           </div>
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
-            No hay datos de ranking todavia
+            {t('noRankingData')}
           </div>
         ) : (
           <>
@@ -264,7 +328,7 @@ export function Leaderboard() {
         >
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: 12 }}>{'\uD83C\uDFB8'}</span>
           <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
-            <strong style={{ color: 'var(--text)' }}>Alli dice:</strong> "Que esperas? Sube en el ranking!"
+            <strong style={{ color: 'var(--text)' }}>{t('alliSays')}</strong> {t('alliQuote')}
           </p>
         </motion.div>
       </div>

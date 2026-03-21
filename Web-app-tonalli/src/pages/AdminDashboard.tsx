@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, Eye, EyeOff, BookOpen, Save, X, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { apiService } from '../services/api';
+import type { QuestionFormItem } from '../services/api';
 import type { Chapter } from '../types';
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
@@ -13,8 +14,8 @@ interface ModuleForm {
   content: string; // JSON string with { sections, keyTerms }
   // Video section
   videoUrl: string;
-  // Quiz section (JSON array of questions)
-  questionsRaw: string; // user-friendly text to edit
+  // Quiz section (structured form)
+  questions: QuestionFormItem[];
 }
 
 interface ChapterForm {
@@ -31,11 +32,13 @@ interface ChapterForm {
 
 const MODULE_TAGS = ['blockchain', 'stellar', 'defi', 'nft', 'wallets', 'trading', 'web3'];
 
+const emptyQuestion = (): QuestionFormItem => ({ question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' });
+
 const emptyModule = (title: string): ModuleForm => ({
   title,
   content: '',
   videoUrl: '',
-  questionsRaw: '',
+  questions: Array(5).fill(null).map(() => emptyQuestion()),
 });
 
 const emptyForm: ChapterForm = {
@@ -98,17 +101,23 @@ export function AdminDashboard() {
       emptyModule('Modulo 3'),
     ];
 
-    lessonModules.forEach((m: any, i: number) => {
-      if (i < 3) {
-        modules[i] = {
-          id: m.id,
-          title: m.title || `Modulo ${i + 1}`,
-          content: m.content || '',
-          videoUrl: m.videoUrl || '',
-          questionsRaw: m.questionsPool || '',
-        };
-      }
-    });
+    // Load questions for each lesson module from DB
+    for (let i = 0; i < Math.min(lessonModules.length, 3); i++) {
+      const m = lessonModules[i];
+      let qs: QuestionFormItem[] = Array(5).fill(null).map(() => emptyQuestion());
+      try {
+        const dbQs = await apiService.adminGetModuleQuestions(m.id);
+        if (dbQs.length > 0) {
+          qs = dbQs.map((q: any) => ({
+            question: q.question,
+            options: (q.options.length === 4 ? q.options : [...q.options, '', '', '', ''].slice(0, 4)) as [string, string, string, string],
+            correctIndex: q.correctIndex,
+            explanation: q.explanation || '',
+          }));
+        }
+      } catch { /* keep empty defaults */ }
+      modules[i] = { id: m.id, title: m.title || `Modulo ${i + 1}`, content: m.content || '', videoUrl: m.videoUrl || '', questions: qs };
+    }
 
     setForm({
       title: ch.title,
@@ -129,6 +138,27 @@ export function AdminDashboard() {
 
   const handleSave = async () => {
     if (!form.title.trim()) { setError('El titulo es requerido.'); return; }
+
+    // Validate quiz questions for each module
+    for (let i = 0; i < 3; i++) {
+      const mod = form.modules[i];
+      const filledQs = mod.questions.filter(q => q.question.trim());
+      if (filledQs.length < 5) {
+        setError(`Modulo ${i + 1}: se requieren al menos 5 preguntas con texto.`);
+        setExpandedModule(i);
+        setActiveTab(prev => ({ ...prev, [i]: 'quiz' }));
+        return;
+      }
+      for (const q of filledQs) {
+        if (q.options.some(opt => !opt.trim())) {
+          setError(`Modulo ${i + 1}: todas las opciones de cada pregunta deben estar llenas.`);
+          setExpandedModule(i);
+          setActiveTab(prev => ({ ...prev, [i]: 'quiz' }));
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     setError('');
     try {
@@ -139,15 +169,15 @@ export function AdminDashboard() {
           order: form.order, published: form.published, releaseWeek: form.releaseWeek || undefined,
           estimatedMinutes: form.estimatedMinutes, xpReward: form.xpReward,
         });
-        // Update each module
+        // Update each module content + questions
         for (const mod of form.modules) {
           if (mod.id) {
             await apiService.adminUpdateModule(mod.id, {
               title: mod.title,
               content: mod.content || undefined,
               videoUrl: mod.videoUrl || undefined,
-              questionsPool: mod.questionsRaw || undefined,
             });
+            await apiService.adminReplaceModuleQuestions(mod.id, mod.questions);
           }
         }
       } else {
@@ -157,7 +187,7 @@ export function AdminDashboard() {
           order: form.order, published: form.published, releaseWeek: form.releaseWeek || undefined,
           estimatedMinutes: form.estimatedMinutes, xpReward: form.xpReward,
         });
-        // Update the 3 lesson modules with content
+        // Update the 3 lesson modules with content + questions
         const lessonModules = (created.modules || []).filter((m: any) => m.type === 'lesson').sort((a: any, b: any) => a.order - b.order);
         for (let i = 0; i < Math.min(lessonModules.length, 3); i++) {
           const mod = form.modules[i];
@@ -165,8 +195,8 @@ export function AdminDashboard() {
             title: mod.title,
             content: mod.content || undefined,
             videoUrl: mod.videoUrl || undefined,
-            questionsPool: mod.questionsRaw || undefined,
           });
+          await apiService.adminReplaceModuleQuestions(lessonModules[i].id, mod.questions);
         }
       }
       await load();
@@ -185,7 +215,7 @@ export function AdminDashboard() {
     catch { setError('Error al eliminar.'); }
   };
 
-  const updateModule = (index: number, field: keyof ModuleForm, value: string) => {
+  const updateModule = (index: number, field: keyof ModuleForm, value: any) => {
     setForm(f => {
       const mods = [...f.modules] as [ModuleForm, ModuleForm, ModuleForm];
       mods[index] = { ...mods[index], [field]: value };
@@ -375,7 +405,7 @@ export function AdminDashboard() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{mod.title || `Modulo ${i + 1}`}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                        {mod.content ? '\u2714 Lectura' : '\u25CB Lectura'} &middot; {mod.videoUrl ? '\u2714 Video' : '\u25CB Video'} &middot; {mod.questionsRaw ? '\u2714 Quiz' : '\u25CB Quiz'}
+                        {mod.content ? '\u2714 Lectura' : '\u25CB Lectura'} &middot; {mod.videoUrl ? '\u2714 Video' : '\u25CB Video'} &middot; {mod.questions.some(q => q.question) ? '\u2714 Quiz' : '\u25CB Quiz'}
                       </div>
                     </div>
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -437,17 +467,95 @@ export function AdminDashboard() {
                       {/* Quiz tab */}
                       {tab === 'quiz' && (
                         <div>
-                          <label className="form-label">Preguntas del quiz (JSON array, 5+ preguntas)</label>
-                          <textarea
-                            className="input-field"
-                            placeholder={'[\n  {\n    "id": "q1",\n    "question": "Pregunta?",\n    "options": ["A", "B", "C", "D"],\n    "correctIndex": 0,\n    "explanation": "Explicacion..."\n  }\n]'}
-                            value={mod.questionsRaw}
-                            onChange={e => updateModule(i, 'questionsRaw', e.target.value)}
-                            style={{ minHeight: 200, resize: 'vertical', fontFamily: 'monospace', fontSize: '0.8rem', lineHeight: 1.5 }}
-                          />
-                          <p style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', marginTop: 4 }}>
-                            Minimo 5 preguntas. correctIndex: 0=A, 1=B, 2=C, 3=D. Las preguntas y opciones se mezclan automaticamente en cada intento.
-                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <label style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                              PREGUNTAS DEL QUIZ ({mod.questions.length}/5 minimo)
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newQ: QuestionFormItem = { question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' };
+                                updateModule(i, 'questions', [...mod.questions, newQ]);
+                              }}
+                              style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.3)', color: '#F5A623', borderRadius: 8, padding: '5px 12px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              + Agregar pregunta
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                            {mod.questions.map((q, qi) => (
+                              <div key={qi} style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                                  <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Pregunta {qi + 1}</span>
+                                  {mod.questions.length > 1 && (
+                                    <button type="button" onClick={() => {
+                                      const updated = mod.questions.filter((_, idx) => idx !== qi);
+                                      updateModule(i, 'questions', updated);
+                                    }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}>x Eliminar</button>
+                                  )}
+                                </div>
+                                <input
+                                  className="input-field"
+                                  placeholder="Cual es...?"
+                                  value={q.question}
+                                  onChange={e => {
+                                    const updated = [...mod.questions];
+                                    updated[qi] = { ...updated[qi], question: e.target.value };
+                                    updateModule(i, 'questions', updated);
+                                  }}
+                                  style={{ marginBottom: 10 }}
+                                />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                                  {q.options.map((opt, oi) => (
+                                    <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <input
+                                        type="radio"
+                                        name={`correct-${i}-${qi}`}
+                                        checked={q.correctIndex === oi}
+                                        onChange={() => {
+                                          const updated = [...mod.questions];
+                                          updated[qi] = { ...updated[qi], correctIndex: oi };
+                                          updateModule(i, 'questions', updated);
+                                        }}
+                                        style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#00D4AA', flexShrink: 0 }}
+                                        title="Marcar como correcta"
+                                      />
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: 16, flexShrink: 0 }}>
+                                        {String.fromCharCode(65 + oi)}
+                                      </span>
+                                      <input
+                                        className="input-field"
+                                        placeholder={`Opcion ${String.fromCharCode(65 + oi)}`}
+                                        value={opt}
+                                        onChange={e => {
+                                          const updated = [...mod.questions];
+                                          const newOpts = [...updated[qi].options] as [string, string, string, string];
+                                          newOpts[oi] = e.target.value;
+                                          updated[qi] = { ...updated[qi], options: newOpts };
+                                          updateModule(i, 'questions', updated);
+                                        }}
+                                        style={{ flex: 1, border: q.correctIndex === oi ? '1.5px solid #00D4AA' : '1px solid var(--border)' }}
+                                      />
+                                    </div>
+                                  ))}
+                                  <p style={{ fontSize: '0.7rem', color: '#00D4AA', margin: 0 }}>Radio = Respuesta correcta</p>
+                                </div>
+                                <input
+                                  className="input-field"
+                                  placeholder="Explicacion (se muestra al terminar el quiz)"
+                                  value={q.explanation}
+                                  onChange={e => {
+                                    const updated = [...mod.questions];
+                                    updated[qi] = { ...updated[qi], explanation: e.target.value };
+                                    updateModule(i, 'questions', updated);
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          {mod.questions.length < 5 && (
+                            <p style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: 8 }}>Se requieren al menos 5 preguntas</p>
+                          )}
                         </div>
                       )}
                     </div>

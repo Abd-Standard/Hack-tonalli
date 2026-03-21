@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, MapPin, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { useT } from '../hooks/useT';
 
 const ESTADOS = [
   'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche',
@@ -25,9 +26,10 @@ export function Register() {
   const [step, setStep] = useState(1);
   const { register, isLoading } = useAuthStore();
   const navigate = useNavigate();
+  const t = useT();
 
   const handleNext = () => {
-    if (!username || !email) { setError('Completa todos los campos'); return; }
+    if (!username || !email) { setError(t('fillAllFields')); return; }
     setError('');
     setStep(2);
   };
@@ -35,24 +37,24 @@ export function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!password || !city || !dateOfBirth) { setError('Completa todos los campos'); return; }
-    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (!password || !city || !dateOfBirth) { setError(t('fillAllFields')); return; }
+    if (password.length < 6) { setError(t('passwordMin')); return; }
     // Client-side age check
     const dob = new Date(dateOfBirth);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const m = today.getMonth() - dob.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-    if (age < 18) { setError('Debes ser mayor de 18 años para registrarte'); return; }
+    if (age < 18) { setError(t('mustBe18')); return; }
     try {
       await register(username, email, password, city, dateOfBirth);
       const { user } = useAuthStore.getState();
       navigate(user?.isFirstLogin ? '/welcome' : '/dashboard');
     } catch (err: any) {
       if (err?.response?.status === 409) {
-        setError('El correo o nombre de usuario ya está registrado.');
+        setError(t('alreadyExists'));
       } else {
-        setError('Error al registrarse. Intenta de nuevo.');
+        setError(t('registerError'));
       }
     }
   };
@@ -82,8 +84,8 @@ export function Register() {
         {/* Character */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <span className="bounce-in" style={{ fontSize: '5rem', display: 'block', marginBottom: 16 }}>🐕</span>
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>¡Únete a Tonalli!</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Xollo está emocionado de conocerte</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>{t('joinTonalli')}</h1>
+          <p style={{ color: 'var(--text-muted)' }}>{t('xolloExcited')}</p>
         </div>
 
         {/* Step indicator */}
@@ -130,7 +132,7 @@ export function Register() {
               style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
             >
               <div className="form-group">
-                <label className="form-label">Nombre de usuario</label>
+                <label className="form-label">{t('username')}</label>
                 <div style={{ position: 'relative' }}>
                   <User size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
@@ -145,7 +147,7 @@ export function Register() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Correo electrónico</label>
+                <label className="form-label">{t('email')}</label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
@@ -160,7 +162,7 @@ export function Register() {
               </div>
 
               <button type="button" className="btn btn-primary btn-full btn-lg" onClick={handleNext}>
-                Continuar →
+                {t('continueBtn')}
               </button>
             </motion.div>
           ) : (
@@ -172,14 +174,14 @@ export function Register() {
               style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
             >
               <div className="form-group">
-                <label className="form-label">Contraseña</label>
+                <label className="form-label">{t('password')}</label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="input-field"
                     style={{ paddingLeft: 44, paddingRight: 44 }}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t('passwordMinPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
@@ -194,7 +196,7 @@ export function Register() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Fecha de nacimiento</label>
+                <label className="form-label">{t('birthDate')}</label>
                 <input
                   type="date"
                   className="input-field"
@@ -204,12 +206,12 @@ export function Register() {
                   style={{ colorScheme: 'dark' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                  Debes ser mayor de 18 años
+                  {t('mustBe18Hint')}
                 </span>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Estado</label>
+                <label className="form-label">{t('state')}</label>
                 <div style={{ position: 'relative' }}>
                   <MapPin size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }} />
                   <select
@@ -218,7 +220,7 @@ export function Register() {
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   >
-                    <option value="">Selecciona tu estado</option>
+                    <option value="">{t('selectState')}</option>
                     {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
                   </select>
                 </div>
@@ -226,10 +228,10 @@ export function Register() {
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setStep(1)} style={{ flex: '0 0 auto' }}>
-                  ← Atrás
+                  {t('backBtn')}
                 </button>
                 <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-                  {isLoading ? 'Creando cuenta...' : '🚀 ¡Empezar!'}
+                  {isLoading ? t('creatingAccount') : t('startBtn')}
                 </button>
               </div>
             </motion.form>
@@ -237,9 +239,9 @@ export function Register() {
 
           <div style={{ textAlign: 'center', marginTop: 20 }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              ¿Ya tienes cuenta?{' '}
+              {t('haveAccount')}{' '}
               <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 800, textDecoration: 'none' }}>
-                Entra aquí
+                {t('loginHere')}
               </Link>
             </p>
           </div>

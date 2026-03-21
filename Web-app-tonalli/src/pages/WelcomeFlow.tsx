@@ -1,15 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
+import { useT } from '../hooks/useT';
 
 export function WelcomeFlow() {
   const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
+  const t = useT();
   const [companion, setCompanion] = useState<'chima' | 'alli' | null>(null);
   const [avatarType, setAvatarType] = useState<'mariachi_hombre' | 'mariachi_mujer' | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // If user already completed onboarding, skip directly to dashboard
+  useEffect(() => {
+    if (user && !user.isFirstLogin) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const canStart = companion && avatarType;
 
@@ -18,13 +27,12 @@ export function WelcomeFlow() {
     setLoading(true);
     try {
       await apiService.setupUser(companion, avatarType);
-      setUser({ ...user!, companion, avatarType, isFirstLogin: false });
-      navigate('/dashboard');
     } catch {
-      // on error still navigate
-      navigate('/dashboard');
+      // ignore API error, still mark as done locally
     } finally {
+      setUser({ ...user!, companion, avatarType, isFirstLogin: false });
       setLoading(false);
+      navigate('/dashboard');
     }
   };
 
@@ -63,7 +71,7 @@ export function WelcomeFlow() {
             letterSpacing: '-0.02em',
             marginBottom: 8,
           }}>
-            Bienvenido a{' '}
+            {t('welcomeTo')}{' '}
             <span style={{
               background: 'linear-gradient(135deg, #F5A623, #E91E8C)',
               WebkitBackgroundClip: 'text',
@@ -102,10 +110,10 @@ export function WelcomeFlow() {
           />
           <div>
             <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#00D4AA', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>
-              Xolo — Tu guía
+              {t('xoloGuide')}
             </div>
             <p style={{ color: '#F0F4F8', fontSize: '1rem', lineHeight: 1.65 }}>
-              Hola, mi nombre es <strong style={{ color: '#F5A623' }}>Xolo</strong> y te estaré acompañando en este viaje de conocimiento hacia <strong style={{ color: '#00D4AA' }}>Web3</strong>.
+              {t('xoloIntro')}
             </p>
           </div>
         </motion.div>
@@ -118,15 +126,15 @@ export function WelcomeFlow() {
           style={{ marginBottom: 32 }}
         >
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 4 }}>
-            Elige tu acompañante
+            {t('chooseCompanion')}
           </h2>
           <p style={{ color: '#8B95A5', fontSize: '0.85rem', marginBottom: 16 }}>
-            Estará contigo en cada lección y quiz.
+            {t('companionDesc')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             {([
-              { id: 'chima', name: 'Chima', role: 'Guía Maestra', color: '#E91E8C', desc: 'Paciente y detallista. Te explica cada concepto con claridad.' },
-              { id: 'alli',  name: 'Alli',  role: 'Desafiador',   color: '#F5A623', desc: 'Competitivo y motivador. Te reta a superar tus límites.' },
+              { id: 'chima', name: 'Chima', role: t('chimaRole'), color: '#E91E8C', desc: t('chimaCompDesc') },
+              { id: 'alli',  name: 'Alli',  role: t('alliRole'),  color: '#F5A623', desc: t('alliCompDesc') },
             ] as const).map((c) => (
               <motion.div
                 key={c.id}
@@ -153,7 +161,7 @@ export function WelcomeFlow() {
                 <div style={{ fontSize: '0.72rem', color: c.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{c.role}</div>
                 <p style={{ fontSize: '0.8rem', color: '#8B95A5', lineHeight: 1.5 }}>{c.desc}</p>
                 {companion === c.id && (
-                  <div style={{ marginTop: 10, fontSize: '0.75rem', fontWeight: 700, color: c.color }}>✓ Seleccionado</div>
+                  <div style={{ marginTop: 10, fontSize: '0.75rem', fontWeight: 700, color: c.color }}>{t('selected')}</div>
                 )}
               </motion.div>
             ))}
@@ -169,8 +177,8 @@ export function WelcomeFlow() {
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             {([
-              { id: 'mariachi_hombre', label: 'Mariachi', sub: 'Hombre', emoji: '🎺', color: '#F5A623' },
-              { id: 'mariachi_mujer',  label: 'Mariachi', sub: 'Mujer',  emoji: '🎻', color: '#E91E8C' },
+              { id: 'mariachi_hombre', label: t('mariachi'), sub: t('mariachiMan'), emoji: '🎺', color: '#F5A623' },
+              { id: 'mariachi_mujer',  label: t('mariachi'), sub: t('mariachiWoman'), emoji: '🎻', color: '#E91E8C' },
             ] as const).map((a) => (
               <motion.div
                 key={a.id}
@@ -191,7 +199,7 @@ export function WelcomeFlow() {
                 <div style={{ fontWeight: 700, fontSize: '1rem', fontFamily: "'Space Grotesk', sans-serif" }}>{a.label}</div>
                 <div style={{ fontSize: '0.8rem', color: a.color, fontWeight: 600 }}>{a.sub}</div>
                 {avatarType === a.id && (
-                  <div style={{ marginTop: 8, fontSize: '0.75rem', fontWeight: 700, color: a.color }}>✓ Seleccionado</div>
+                  <div style={{ marginTop: 8, fontSize: '0.75rem', fontWeight: 700, color: a.color }}>{t('selected')}</div>
                 )}
               </motion.div>
             ))}
@@ -211,14 +219,14 @@ export function WelcomeFlow() {
                 onClick={handleStart}
                 disabled={loading}
               >
-                {loading ? 'Guardando...' : 'Comenzar mi viaje →'}
+                {loading ? t('saving') : t('beginMyJourney')}
               </button>
             </motion.div>
           )}
         </AnimatePresence>
         {!canStart && (
           <p style={{ textAlign: 'center', color: '#4A5568', fontSize: '0.85rem', marginTop: 8 }}>
-            Selecciona un acompañante y un avatar para continuar.
+            {t('selectCompanionAndAvatar')}
           </p>
         )}
       </motion.div>

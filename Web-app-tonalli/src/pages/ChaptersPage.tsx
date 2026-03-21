@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Clock, Zap, ChevronRight, X, Tag } from 'lucide-react';
 import { apiService } from '../services/api';
 import type { Chapter } from '../types';
+import { useT } from '../hooks/useT';
 
 const TAG_COLORS: Record<string, string> = {
   blockchain: 'var(--blue)',
@@ -17,6 +18,7 @@ const TAG_COLORS: Record<string, string> = {
 
 export function ChaptersPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Chapter | null>(null);
@@ -44,10 +46,10 @@ export function ChaptersPage() {
           style={{ marginBottom: 32 }}
         >
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em', marginBottom: 6 }}>
-            Capítulos de aprendizaje
+            {t('learningChapters')}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            {chapters.length} capítulo{chapters.length !== 1 ? 's' : ''} disponible{chapters.length !== 1 ? 's' : ''}
+            {chapters.length} {t('chaptersAvailable')}
           </p>
         </motion.div>
 
@@ -63,7 +65,7 @@ export function ChaptersPage() {
               }}
               onClick={() => setFilterTag('')}
             >
-              Todos
+              {t('all')}
             </button>
             {tags.map(tag => (
               <button
@@ -90,11 +92,11 @@ export function ChaptersPage() {
 
         {/* Grid */}
         {loading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 60 }}>Cargando capítulos...</div>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 60 }}>{t('loadingChapters')}</div>
         ) : filtered.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: 48 }}>
             <BookOpen size={40} style={{ color: 'var(--text-subtle)', margin: '0 auto 16px' }} />
-            <p style={{ color: 'var(--text-muted)' }}>No hay capítulos disponibles aún.</p>
+            <p style={{ color: 'var(--text-muted)' }}>{t('noChapters')}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
@@ -113,7 +115,7 @@ export function ChaptersPage() {
                     opacity: ch.accessible === false ? 0.5 : 1,
                   }}
                   whileHover={ch.accessible !== false ? { y: -3, borderColor: 'var(--border-active)' } : {}}
-                  onClick={() => ch.accessible !== false ? navigate(`/chapters/${ch.id}`) : null}
+                  onClick={() => ch.accessible !== false ? navigate(`/chapters/${ch.moduleTag || ch.id}`) : null}
                 >
                   {/* White shimmer top */}
                   <div style={{

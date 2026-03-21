@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { CertificateCard } from '../components/CertificateCard';
+import { useT } from '../hooks/useT';
 import type { ActaCertificateData } from '../types';
 
 export function CertificatesPage() {
+  const t = useT();
   const [certs, setCerts] = useState<ActaCertificateData[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifyId, setVerifyId] = useState('');
@@ -43,21 +45,21 @@ export function CertificatesPage() {
         textAlign: 'center',
       }}>
         <div style={{ fontSize: '4rem', marginBottom: 12 }}>{'\uD83C\uDFC6'}</div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>Mis Certificados</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: 8 }}>{t('myCertificatesPage')}</h1>
         <p style={{ color: 'var(--text-muted)' }}>
-          Certificados oficiales validados por ACTA en Stellar
+          {t('acta_certified')}
         </p>
       </div>
 
       <div className="container" style={{ padding: '32px 24px', maxWidth: 800, margin: '0 auto' }}>
         {/* Verify section */}
         <div className="card" style={{ padding: 20, marginBottom: 32 }}>
-          <h3 style={{ fontWeight: 700, marginBottom: 12 }}>Verificar certificado</h3>
+          <h3 style={{ fontWeight: 700, marginBottom: 12 }}>{t('verifyCertificate')}</h3>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="text"
               className="input-field"
-              placeholder="Ingresa el VC ID del certificado"
+              placeholder={t('verifyPlaceholder')}
               value={verifyId}
               onChange={(e) => setVerifyId(e.target.value)}
               style={{ flex: 1 }}
@@ -66,7 +68,7 @@ export function CertificatesPage() {
               onClick={handleVerify}
               className="btn btn-primary"
             >
-              Verificar
+              {t('verify')}
             </button>
           </div>
           {verifyResult && (
@@ -79,13 +81,13 @@ export function CertificatesPage() {
             }}>
               {verifyResult.valid ? (
                 <div>
-                  <p style={{ color: '#00C896', fontWeight: 700 }}>{'\u2714'} Certificado valido</p>
+                  <p style={{ color: '#00C896', fontWeight: 700 }}>{t('certValid')}</p>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>
                     {verifyResult.certificate?.chapterTitle} — {verifyResult.certificate?.username} — {verifyResult.certificate?.examScore}%
                   </p>
                 </div>
               ) : (
-                <p style={{ color: '#FF4757', fontWeight: 700 }}>{'\u2718'} Certificado no encontrado</p>
+                <p style={{ color: '#FF4757', fontWeight: 700 }}>{t('certNotFound')}</p>
               )}
             </div>
           )}
@@ -99,9 +101,9 @@ export function CertificatesPage() {
         ) : certs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
             <div style={{ fontSize: '4rem', marginBottom: 16 }}>{'\uD83D\uDCDC'}</div>
-            <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Sin certificados aun</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 8 }}>{t('noCertificatesYet')}</h3>
             <p style={{ color: 'var(--text-muted)' }}>
-              Completa capitulos al 100% para obtener certificados oficiales ACTA
+              {t('completeChaptersForCerts')}
             </p>
           </div>
         ) : (

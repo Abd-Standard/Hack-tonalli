@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
+import { useLanguageStore } from '../stores/languageStore';
 import { Zap, LogOut, Trophy, LayoutDashboard, BookOpen, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { dailyStreak } = useProgressStore();
+  const { language, setLanguage } = useLanguageStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -92,9 +94,11 @@ export function Navbar() {
             <BookOpen size={17} />
           </Link>
 
-          <Link to="/leaderboard" style={{ color: 'var(--text-muted)', textDecoration: 'none', padding: '6px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }} title="Ranking">
-            <Trophy size={17} />
-          </Link>
+          {user?.isPremium && (
+            <Link to="/leaderboard" style={{ color: 'var(--text-muted)', textDecoration: 'none', padding: '6px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }} title="Ranking">
+              <Trophy size={17} />
+            </Link>
+          )}
 
           {!user?.isPremium && (
             <Link to="/premium" style={{
@@ -114,6 +118,21 @@ export function Navbar() {
               <Shield size={17} />
             </Link>
           )}
+
+          {/* Language toggle */}
+          <button
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+              borderRadius: 20, padding: '4px 12px', cursor: 'pointer',
+              fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)',
+              transition: 'all 0.2s ease',
+            }}
+            title="Cambiar idioma / Switch language"
+          >
+            🌐 {language === 'es' ? 'ES' : 'EN'}
+          </button>
 
           {/* Avatar */}
           <Link to="/profile" style={{ textDecoration: 'none', marginLeft: 4 }}>
@@ -140,7 +159,20 @@ export function Navbar() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+              borderRadius: 20, padding: '4px 12px', cursor: 'pointer',
+              fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)',
+              transition: 'all 0.2s ease',
+            }}
+            title="Cambiar idioma / Switch language"
+          >
+            🌐 {language === 'es' ? 'ES' : 'EN'}
+          </button>
           <Link to="/login" className="btn btn-ghost btn-sm">Iniciar sesión</Link>
           <Link to="/register" className="btn btn-primary btn-sm">Registrarse</Link>
         </div>

@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+export interface QuestionFormItem {
+  question: string;
+  options: [string, string, string, string];
+  correctIndex: number;
+  explanation: string;
+}
+
 const BASE_URL = 'http://localhost:3001/api';
 
 const api = axios.create({
@@ -196,6 +203,16 @@ export const apiService = {
 
   adminDeleteChapter: async (id: string) => {
     await api.delete(`/chapters/${id}`);
+  },
+
+  adminGetModuleQuestions: async (moduleId: string) => {
+    const res = await api.get(`/chapters/modules/${moduleId}/questions`);
+    return res.data;
+  },
+
+  adminReplaceModuleQuestions: async (moduleId: string, questions: QuestionFormItem[]) => {
+    const res = await api.put(`/chapters/modules/${moduleId}/questions`, { questions });
+    return res.data;
   },
 
   // ── Leaderboard / Podium ────────────────────────────────────────────────

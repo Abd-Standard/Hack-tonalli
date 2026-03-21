@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { useT } from '../hooks/useT';
 
 export function Login() {
   const [email, setEmail] = useState('demo@tonalli.mx');
@@ -11,6 +12,7 @@ export function Login() {
   const [error, setError] = useState('');
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
+  const t = useT();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ export function Login() {
       const { user } = useAuthStore.getState();
       navigate(user?.role === 'admin' ? '/admin' : (user?.isFirstLogin ? '/welcome' : '/dashboard'));
     } catch {
-      setError('Credenciales incorrectas. Intenta de nuevo.');
+      setError(t('loginError'));
     }
   };
 
@@ -51,10 +53,10 @@ export function Login() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-            Bienvenido a Tonalli
+            {t('welcomeBack')}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Continúa aprendiendo Web3.
+            {t('continuelearning')}
           </p>
         </div>
 
@@ -84,7 +86,7 @@ export function Login() {
             )}
 
             <div className="form-group">
-              <label className="form-label">Correo electrónico</label>
+              <label className="form-label">{t('email')}</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
@@ -100,7 +102,7 @@ export function Login() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Contraseña</label>
+              <label className="form-label">{t('password')}</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
@@ -139,16 +141,16 @@ export function Login() {
                   }} />
                   Entrando...
                 </span>
-              ) : 'Iniciar sesión'}
+              ) : t('loginBtn')}
             </button>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: 18 }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem', marginBottom: 12 }}>
-              ¿No tienes cuenta?
+              {t('noAccount')}
             </p>
             <Link to="/register" className="btn btn-ghost btn-full" style={{ border: '1px solid var(--border-active)' }}>
-              Regístrate gratis
+              {t('registerHere')}
             </Link>
           </div>
         </div>

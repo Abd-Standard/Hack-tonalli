@@ -3,6 +3,7 @@ import { Zap, Flame, Star, BookOpen, Award, Copy, ExternalLink } from 'lucide-re
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { Link } from 'react-router-dom';
+import { useT } from '../hooks/useT';
 
 function StatCard({ icon, value, label, color }: { icon: React.ReactNode; value: string | number; label: string; color: string }) {
   return (
@@ -19,6 +20,7 @@ function StatCard({ icon, value, label, color }: { icon: React.ReactNode; value:
 }
 
 function NFTCard({ nft }: { nft: { id: string; title: string; description: string; txHash: string; earnedAt: string; moduleId: string } }) {
+  const t = useT();
   const shortHash = `${nft.txHash.substring(0, 8)}...${nft.txHash.substring(nft.txHash.length - 8)}`;
 
   const copyHash = () => {
@@ -62,11 +64,11 @@ function NFTCard({ nft }: { nft: { id: string; title: string; description: strin
         </div>
       </div>
 
-      <div className="badge badge-purple" style={{ marginBottom: 8 }}>NFT Certificado</div>
+      <div className="badge badge-purple" style={{ marginBottom: 8 }}>{t('nftCertified')}</div>
       <h3 style={{ fontWeight: 900, fontSize: '1rem', marginBottom: 6 }}>{nft.title}</h3>
       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>{nft.description}</p>
 
-      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 6 }}>Stellar TX Hash:</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 6 }}>{t('stellarTxHash')}</div>
       <div style={{
         background: 'rgba(0,0,0,0.3)',
         borderRadius: 8, padding: '8px 10px',
@@ -86,7 +88,7 @@ function NFTCard({ nft }: { nft: { id: string; title: string; description: strin
       </div>
 
       <div style={{ marginTop: 10, fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-        Obtenido: {new Date(nft.earnedAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+        {t('obtainedOn')} {new Date(nft.earnedAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
       </div>
     </motion.div>
   );
@@ -95,11 +97,12 @@ function NFTCard({ nft }: { nft: { id: string; title: string; description: strin
 export function Profile() {
   const { user } = useAuthStore();
   const { dailyStreak, completedLessons } = useProgressStore();
+  const t = useT();
 
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Link to="/login" className="btn btn-primary">Iniciar sesión</Link>
+        <Link to="/login" className="btn btn-primary">{t('loginBtn')}</Link>
       </div>
     );
   }
@@ -154,7 +157,7 @@ export function Profile() {
             padding: '3px 10px', borderRadius: 20,
             border: '2px solid var(--background)',
           }}>
-            Niv. {user.level}
+            {t('levelBadge')} {user.level}
           </div>
         </motion.div>
 
@@ -169,7 +172,7 @@ export function Profile() {
             background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)',
             borderRadius: 20, padding: '6px 14px', fontSize: '0.8rem',
           }}>
-            ⭐ Wallet: {user.walletAddress}
+            ⭐ {t('stellarWallet')}: {user.walletAddress}
           </div>
         )}
       </div>
@@ -184,14 +187,14 @@ export function Profile() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div>
-              <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>Progreso al Nivel {user.level + 1}</div>
+              <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>{t('progressToLevel').replace('{n}', String(user.level + 1))}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 {user.xp.toLocaleString()} / {xpToNextLevel.toLocaleString()} XP
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent)' }}>
               <Zap size={18} color="var(--accent)" />
-              {(xpToNextLevel - user.xp).toLocaleString()} XP para subir
+              {(xpToNextLevel - user.xp).toLocaleString()} {t('xpToLevelUp')}
             </div>
           </div>
           <div className="progress-bar" style={{ height: 14 }}>
@@ -212,11 +215,11 @@ export function Profile() {
           transition={{ delay: 0.1 }}
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginBottom: 32 }}
         >
-          <StatCard icon={<Flame size={28} />} value={dailyStreak} label="Días de racha" color="#FF6B35" />
-          <StatCard icon={<Zap size={28} />} value={`${user.xp.toLocaleString()} XP`} label="XP total" color="#FFD700" />
-          <StatCard icon={<Star size={28} />} value={`${user.xlmEarned} XLM`} label="XLM ganados" color="#00C896" />
-          <StatCard icon={<BookOpen size={28} />} value={completedLessons.length} label="Lecciones" color="#9B59B6" />
-          <StatCard icon={<Award size={28} />} value={user.nftCertificates.length} label="NFT Badges" color="#3498DB" />
+          <StatCard icon={<Flame size={28} />} value={dailyStreak} label={`${t('streak')} (${t('days')})`} color="#FF6B35" />
+          <StatCard icon={<Zap size={28} />} value={`${user.xp.toLocaleString()} XP`} label={t('totalXp')} color="#FFD700" />
+          <StatCard icon={<Star size={28} />} value={`${user.xlmEarned} XLM`} label={t('xlmEarned')} color="#00C896" />
+          <StatCard icon={<BookOpen size={28} />} value={completedLessons.length} label={t('completedModules')} color="#9B59B6" />
+          <StatCard icon={<Award size={28} />} value={user.nftCertificates.length} label={t('nftBadges')} color="#3498DB" />
         </motion.div>
 
         {/* Streak section */}
@@ -236,10 +239,10 @@ export function Profile() {
             <span className="float-animation" style={{ fontSize: '4rem', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}>🐕</span>
             <div style={{ flex: 1 }}>
               <h3 style={{ fontWeight: 900, fontSize: '1.2rem', marginBottom: 4 }}>
-                ¡Xollo está feliz! 🔥 {dailyStreak} días seguidos
+                {t('xolloHappyStreak').replace('{n}', String(dailyStreak))}
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Has mantenido tu racha por {dailyStreak} días. ¡No la pierdas!
+                {t('streakMaintained').replace('{n}', String(dailyStreak))}
               </p>
             </div>
             <div style={{
@@ -247,7 +250,7 @@ export function Profile() {
               border: '1px solid rgba(255,107,53,0.4)',
             }}>
               <div style={{ fontWeight: 900, fontSize: '1.5rem', color: 'var(--primary)' }}>🔥 {dailyStreak}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>días activos</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('activeDays')}</div>
             </div>
           </motion.div>
         )}
@@ -259,7 +262,7 @@ export function Profile() {
           transition={{ delay: 0.3 }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 900 }}>🎨 Mis NFT Certificados</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 900 }}>🎨 {t('myCertificates')}</h2>
             <span className="badge badge-purple">{user.nftCertificates.length} tokens</span>
           </div>
 
@@ -272,11 +275,11 @@ export function Profile() {
           ) : (
             <div className="card" style={{ textAlign: 'center', padding: 40 }}>
               <div style={{ fontSize: '3rem', marginBottom: 16 }}>🎨</div>
-              <h3 style={{ marginBottom: 8 }}>Aún no tienes NFTs</h3>
+              <h3 style={{ marginBottom: 8 }}>{t('noCertificates')}</h3>
               <p style={{ color: 'var(--text-muted)', marginBottom: 20, fontSize: '0.9rem' }}>
-                Completa módulos de lecciones para ganar tus primeros NFT certificados en Stellar
+                {t('completeModulesForNft')}
               </p>
-              <Link to="/dashboard" className="btn btn-primary">Empezar a aprender →</Link>
+              <Link to="/dashboard" className="btn btn-primary">{t('startLearning')}</Link>
             </div>
           )}
         </motion.div>

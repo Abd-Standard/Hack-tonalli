@@ -3,21 +3,23 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { apiService } from '../services/api';
-
-const benefits = [
-  { icon: '📚', text: 'Módulo 4 (Examen Final) desbloqueado' },
-  { icon: '♾️', text: 'Intentos ilimitados en quizzes' },
-  { icon: '⚡', text: 'Acceso anticipado a nuevos capítulos' },
-  { icon: '🏆', text: 'Participar en el Podio semanal (gana XLM real)' },
-  { icon: '🎨', text: 'Certificados NFT verificables' },
-];
+import { useT } from '../hooks/useT';
 
 export function PremiumPage() {
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const benefits = [
+    { icon: '📚', text: t('benefit1') },
+    { icon: '♾️', text: t('benefit2') },
+    { icon: '⚡', text: t('benefit3') },
+    { icon: '🏆', text: t('benefit4') },
+    { icon: '🎨', text: t('benefit5') },
+  ];
 
   const handleUpgrade = async () => {
     if (!user) return;
@@ -28,7 +30,7 @@ export function PremiumPage() {
       setUser({ ...user, isPremium: true });
       setSuccess(true);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al procesar la solicitud');
+      setError(err?.response?.data?.message || t('errorProcessing'));
     } finally {
       setLoading(false);
     }
@@ -68,7 +70,7 @@ export function PremiumPage() {
         </motion.div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, margin: 0 }}>Hazte Premium</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 900, margin: 0 }}>{t('becomePremium')}</h1>
           {user?.isPremium ? (
             <span style={{
               background: 'linear-gradient(135deg, #00D4AA, #00A67E)',
@@ -80,7 +82,7 @@ export function PremiumPage() {
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
             }}>
-              Ya eres Premium ✓
+              {t('alreadyPremium')}
             </span>
           ) : (
             <span style={{
@@ -93,12 +95,12 @@ export function PremiumPage() {
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
             }}>
-              Premium
+              {t('premium')}
             </span>
           )}
         </div>
         <p style={{ color: 'var(--text-muted)', maxWidth: 440, margin: '0 auto' }}>
-          Desbloquea todo el contenido y compite por premios reales en XLM
+          {t('premiumUnlockAll')}
         </p>
       </motion.div>
 
@@ -125,7 +127,7 @@ export function PremiumPage() {
             }}
           >
             <span>✓</span>
-            <span>¡Felicidades! Ahora eres Premium. Todos los beneficios están activados.</span>
+            <span>{t('congratsPremium')}</span>
           </motion.div>
         )}
 
@@ -180,19 +182,19 @@ export function PremiumPage() {
               color: user?.isPremium ? '#00D4AA' : '#E91E8C',
               textTransform: 'uppercase', letterSpacing: '0.05em',
             }}>
-              {user?.isPremium ? 'Activo' : 'Popular'}
+              {user?.isPremium ? t('active') : t('popular')}
             </div>
 
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>⭐</div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 4, color: user?.isPremium ? '#00D4AA' : '#E91E8C' }}>
-              Premium Mensual
+              {t('premiumMonthly')}
             </h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 16 }}>
               <span style={{ fontSize: '2.2rem', fontWeight: 900, color: '#F0F4F8' }}>$20</span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>USD/mes</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('perMonth')}</span>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 20, lineHeight: 1.5 }}>
-              Acceso completo a todos los módulos, quizzes ilimitados y participación en el Podio semanal.
+              {t('premiumMonthlyDesc')}
             </p>
 
             {user?.isPremium ? (
@@ -207,7 +209,7 @@ export function PremiumPage() {
                 fontWeight: 700,
                 fontSize: '0.95rem',
               }}>
-                Ya eres Premium ✓
+                {t('alreadyPremium')}
               </div>
             ) : (
               <button
@@ -230,7 +232,7 @@ export function PremiumPage() {
                   transition: 'opacity 0.2s',
                 }}
               >
-                {loading ? 'Procesando...' : 'Obtener Premium'}
+                {loading ? t('processing') : t('getPremium')}
               </button>
             )}
           </motion.div>
@@ -249,14 +251,14 @@ export function PremiumPage() {
           >
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>📜</div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 4, color: '#F5A623' }}>
-              Certificado Individual
+              {t('individualCertificate')}
             </h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 16 }}>
               <span style={{ fontSize: '2.2rem', fontWeight: 900, color: '#F0F4F8' }}>$10</span>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>USD</span>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 20, lineHeight: 1.5 }}>
-              Desbloquea el examen final de un capítulo y obtén tu certificado NFT verificable en Stellar.
+              {t('individualCertDesc')}
             </p>
             <button
               disabled
@@ -269,7 +271,7 @@ export function PremiumPage() {
                 opacity: 0.75,
               }}
             >
-              Próximamente
+              {t('comingSoonBtn')}
             </button>
           </motion.div>
         </div>
@@ -283,7 +285,7 @@ export function PremiumPage() {
           style={{ padding: 28, marginBottom: 24 }}
         >
           <h3 style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 20 }}>
-            Beneficios Premium
+            {t('premiumBenefits')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {benefits.map((b, i) => (
@@ -318,14 +320,14 @@ export function PremiumPage() {
         >
           {!user?.isPremium && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: 12 }}>
-              Al continuar, aceptas los términos del servicio Premium
+              {t('premiumTerms')}
             </p>
           )}
           <button
             onClick={() => navigate(-1)}
             className="btn btn-ghost btn-sm"
           >
-            &larr; Volver
+            {t('goBack')}
           </button>
         </motion.div>
 

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Lock, ChevronRight, BookOpen, Play, FileQuestion, Trophy } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useLanguageStore } from '../stores/languageStore';
+import { useT } from '../hooks/useT';
 import type { ChapterWithProgress, ChapterModuleData } from '../types';
 import { VideoModule } from '../components/VideoModule';
 import { LivesIndicator } from '../components/LivesIndicator';
@@ -21,6 +23,8 @@ export function ChapterFlow() {
   const { chapterId } = useParams<{ chapterId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { language } = useLanguageStore();
+  const t = useT();
   const [chapter, setChapter] = useState<ChapterWithProgress | null>(null);
   const [view, setView] = useState<ActiveView>({ step: 'overview' });
   const [loading, setLoading] = useState(true);
@@ -106,7 +110,7 @@ export function ChapterFlow() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Cargando capitulo...</div>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('loadingChapter')}</div>
       </div>
     );
   }
@@ -114,7 +118,7 @@ export function ChapterFlow() {
   if (!chapter) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--danger)' }}>Capitulo no encontrado</div>
+        <div style={{ color: 'var(--danger)' }}>{t('chapterNotFound')}</div>
       </div>
     );
   }
@@ -125,7 +129,7 @@ export function ChapterFlow() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ textAlign: 'center', maxWidth: 400 }}>
           <Lock size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 8 }}>Capitulo bloqueado</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 8 }}>{t('chapterLocked')}</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>{chapter.lockedReason}</p>
           {!chapter.isPremium && (
             <div className="card" style={{ padding: 16, marginBottom: 16, border: '1px solid rgba(201,146,10,0.3)', background: 'rgba(201,146,10,0.06)' }}>
@@ -156,11 +160,11 @@ export function ChapterFlow() {
       <div style={{ minHeight: '100vh' }}>
         {/* Header bar */}
         <div style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)', padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <button onClick={() => setView({ step: 'overview' })} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}>&larr;</button>
+          <button onClick={async () => { await loadChapter(); setView({ step: 'overview' }); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}>&larr;</button>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '1rem' }}>{mod?.title}</div>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              {chapter.title} &middot; {view.step === 'info' ? 'Lectura' : view.step === 'video' ? 'Video' : view.step === 'quiz' ? 'Quiz' : 'Examen Final'}
+              {chapter.title} &middot; {view.step === 'info' ? t('reading') : view.step === 'video' ? t('video') : view.step === 'quiz' ? t('quiz') : t('finalExam')}
             </div>
           </div>
           {(view.step === 'quiz' || view.step === 'final_exam') && mod && (
@@ -173,9 +177,9 @@ export function ChapterFlow() {
           {mod?.type === 'lesson' && mod.sections && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
               {[
-                { key: 'info' as const, label: 'Lectura', icon: <BookOpen size={14} />, done: mod.sections.info.completed },
-                { key: 'video' as const, label: 'Video', icon: <Play size={14} />, done: mod.sections.video.completed },
-                { key: 'quiz' as const, label: 'Quiz', icon: <FileQuestion size={14} />, done: mod.sections.quiz.completed },
+                { key: 'info' as const, label: t('reading'), icon: <BookOpen size={14} />, done: mod.sections.info.completed },
+                { key: 'video' as const, label: t('video'), icon: <Play size={14} />, done: mod.sections.video.completed },
+                { key: 'quiz' as const, label: t('quiz'), icon: <FileQuestion size={14} />, done: mod.sections.quiz.completed },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -201,14 +205,19 @@ export function ChapterFlow() {
               {!mod?.sections?.info.completed && (
                 <div style={{ textAlign: 'center', marginTop: 32 }}>
                   {!infoRead ? (
-                    <button className="btn btn-primary btn-lg" onClick={() => setInfoRead(true)}>He terminado de leer</button>
+                    <button className="btn btn-primary btn-lg" onClick={() => setInfoRead(true)}>{t('doneReading')}</button>
                   ) : (
-                    <button className="btn btn-primary btn-lg" style={{ background: 'var(--success)' }} onClick={() => handleCompleteInfo(mod!.id)}>Completar y continuar &rarr;</button>
+                    <button className="btn btn-primary btn-lg" style={{ background: 'var(--success)' }} onClick={() => handleCompleteInfo(mod!.id)}>{t('completeAndContinue')}</button>
                   )}
                 </div>
               )}
               {mod?.sections?.info.completed && (
-                <div style={{ textAlign: 'center', marginTop: 24, color: 'var(--success)', fontWeight: 700 }}>\u2714 Lectura completada</div>
+                <div style={{ textAlign: 'center', marginTop: 24, color: 'var(--success)', fontWeight: 700 }}>{t('readingCompleted')}</div>
+              )}
+              {language === 'en' && (
+                <div style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.25)', borderRadius: 10, padding: '8px 14px', marginTop: 16, fontSize: '0.8rem', color: '#F5A623' }}>
+                  {t('contentLanguageNotice')}
+                </div>
               )}
             </div>
           )}
@@ -233,139 +242,298 @@ export function ChapterFlow() {
   }
 
   // ── Chapter overview ─────────────────────────────────────────────────────
+  const pct = chapter.completionPercent;
+  const completedMods = chapter.modules.filter((m: any) => m.completed).length;
+  const totalMods = chapter.modules.length;
+  const progressColor = pct === 100 ? '#00D4AA' : pct >= 50 ? '#F5A623' : '#E91E8C';
+
+  const tagIcons: Record<string, string> = {
+    blockchain: '🔗', stellar: '⭐', wallets: '👛', defi: '💱', nfts: '🎨',
+  };
+  const tagIcon = tagIcons[chapter.moduleTag ?? ''] ?? '📚';
+
   return (
     <div style={{ minHeight: '100vh', paddingBottom: 60 }}>
-      {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(26,127,75,0.12), rgba(201,146,10,0.08))',
-        borderBottom: '1px solid var(--border)',
-        padding: '32px 24px 24px',
-      }}>
-        <div className="container">
-          <button onClick={() => navigate('/chapters')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>&larr; Capitulos</button>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>{chapter.title}</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 20 }}>{chapter.description}</p>
+      {/* Header hero */}
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
+        {/* Decorative blobs */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(233,30,140,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,166,35,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-          {/* Progress bar */}
-          <div style={{ maxWidth: 400 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>Progreso</span>
-              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{chapter.completionPercent}%</span>
-            </div>
-            <div className="progress-bar" style={{ height: 10 }}>
-              <div className="progress-fill" style={{ width: `${chapter.completionPercent}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '20px 24px 0', position: 'relative' }}>
+          {/* Back */}
+          <button onClick={() => navigate('/chapters')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-subtle)', fontSize: '0.82rem', fontWeight: 600, padding: '4px 0', marginBottom: 20 }}>
+            {t('backToChapters')}
+          </button>
 
-      {/* 4 Modules */}
-      <div className="container" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Main card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', marginBottom: 20 }}
+          >
+            {/* Top accent bar */}
+            <div style={{ height: 4, background: 'linear-gradient(90deg, #E91E8C, #F5A623, #00D4AA)' }} />
+
+            <div style={{ padding: '24px 28px 20px' }}>
+              {/* Tag row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: '1.4rem' }}>{tagIcon}</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {chapter.moduleTag ?? 'Capítulo'}
+                </span>
+                {pct === 100 && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 700, background: 'rgba(0,212,170,0.12)', color: '#00D4AA', border: '1px solid rgba(0,212,170,0.25)', padding: '3px 10px', borderRadius: 20 }}>
+                    ✓ Completado
+                  </span>
+                )}
+              </div>
+
+              {/* Title */}
+              <h1 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, margin: '0 0 8px', fontFamily: "'Space Grotesk', sans-serif", lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+                {chapter.title}
+              </h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.65, maxWidth: 560 }}>
+                {chapter.description}
+              </p>
+
+              {/* Stats + CTA */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 16, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
+                {/* Stats */}
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: '0.8rem' }}>📦</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      {chapter.isPremium ? `${totalMods} módulos` : `3 módulos (free)`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: '0.8rem' }}>⚡</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{chapter.xpReward} XP</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: '0.8rem' }}>🏅</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>NFT al completar</span>
+                  </div>
+                </div>
+
+                {/* CTA button */}
+                {(() => {
+                  if (chapter.modules.length === 0) return null;
+                  const firstUnlocked = chapter.modules.find((m: any) => m.unlocked && !m.completed);
+                  const allDone = pct === 100;
+
+                  if (allDone) {
+                    return (
+                      <button
+                        onClick={() => openModule(chapter.modules[0])}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)', color: '#00D4AA', borderRadius: 10, padding: '9px 18px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        ✓ Repasar
+                      </button>
+                    );
+                  }
+                  const target = firstUnlocked ?? chapter.modules[0];
+                  const isStarted = completedMods > 0;
+                  return (
+                    <button
+                      onClick={() => openModule(target)}
+                      disabled={!target.unlocked}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: target.unlocked ? 'linear-gradient(135deg, #E91E8C, #F5A623)' : 'var(--bg-subtle)', border: 'none', color: target.unlocked ? '#fff' : 'var(--text-muted)', borderRadius: 10, padding: '10px 20px', fontWeight: 800, fontSize: '0.88rem', cursor: target.unlocked ? 'pointer' : 'not-allowed', boxShadow: target.unlocked ? '0 4px 14px rgba(233,30,140,0.3)' : 'none', whiteSpace: 'nowrap' }}
+                    >
+                      {isStarted ? '▶ Continuar' : '🚀 Iniciar'}
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ background: 'var(--bg-overlay)', borderTop: '1px solid var(--border)', padding: '14px 28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                  {completedMods === 0 ? 'Sin iniciar' : `${completedMods} de ${totalMods} módulos`}
+                </span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 900, color: progressColor }}>{pct}%</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 6, background: 'var(--bg-subtle)', overflow: 'hidden' }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
+                  style={{ height: '100%', borderRadius: 6, background: `linear-gradient(90deg, #E91E8C, ${progressColor})` }}
+                />
+              </div>
+            </div>
+
+            {/* Modules inside card */}
+            <div style={{ padding: '20px 28px 24px' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>
+                Módulos del capítulo
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {chapter.modules.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+              Los módulos se están configurando, vuelve en un momento.
+            </div>
+          )}
           {chapter.modules.map((mod, i) => {
             const isExam = mod.type === 'final_exam';
             const s = mod.sections;
-            const sectionsDone = s ? [s.info.completed, s.video.completed || !s.video.hasVideo, s.quiz.completed].filter(Boolean).length : 0;
-            const sectionsTotal = s ? (s.video.hasVideo ? 3 : 2) : 0;
+            const isLast = i === chapter.modules.length - 1;
 
-            const colors = isExam
-              ? { bg: 'rgba(201,146,10,0.12)', border: 'rgba(201,146,10,0.3)', icon: 'linear-gradient(135deg, #c9920a, #f0b429)' }
-              : mod.completed
-                ? { bg: 'rgba(63,185,80,0.08)', border: 'rgba(63,185,80,0.3)', icon: 'linear-gradient(135deg, #1a7f4b, #3fb950)' }
-                : { bg: 'var(--bg-elevated)', border: 'var(--border)', icon: 'linear-gradient(135deg, #58a6ff, #8b5cf6)' };
+            // State
+            const isCompleted = mod.completed;
+            const isActive = mod.unlocked && !isCompleted;
+            const isLocked = !mod.unlocked;
+
+            // Colors per state
+            const nodeGradient = isCompleted
+              ? 'linear-gradient(135deg, #00D4AA, #0DFFC6)'
+              : isExam && isActive
+                ? 'linear-gradient(135deg, #F5A623, #FFD60A)'
+                : isActive
+                  ? 'linear-gradient(135deg, #E91E8C, #F5A623)'
+                  : 'var(--bg-subtle)';
+
+            const cardBorder = isCompleted
+              ? '1px solid rgba(0,212,170,0.25)'
+              : isExam && isActive
+                ? '1px solid rgba(245,166,35,0.35)'
+                : isActive
+                  ? '1px solid rgba(233,30,140,0.25)'
+                  : '1px solid var(--border)';
+
+            const cardBg = isCompleted
+              ? 'rgba(0,212,170,0.04)'
+              : isExam && isActive
+                ? 'rgba(245,166,35,0.05)'
+                : 'var(--bg-elevated)';
+
+            // Section steps
+            const steps = s ? [
+              { label: 'Lectura', icon: '📖', done: s.info.completed, show: s.info.hasContent },
+              { label: 'Video', icon: '🎬', done: s.video.completed, show: s.video.hasVideo },
+              { label: 'Quiz', icon: '✏️', done: s.quiz.completed, show: true },
+            ].filter(st => st.show) : [];
 
             return (
               <motion.div
                 key={mod.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.07 }}
+                style={{ display: 'flex', gap: 0 }}
               >
-                <button
-                  onClick={() => openModule(mod)}
-                  disabled={!mod.unlocked}
-                  style={{
-                    width: '100%', textAlign: 'left', borderRadius: 14, padding: '18px 20px',
-                    background: colors.bg,
-                    border: `1px solid ${mod.unlocked ? colors.border : 'var(--border)'}`,
-                    cursor: mod.unlocked ? 'pointer' : 'not-allowed',
-                    opacity: mod.unlocked ? 1 : 0.4,
-                    transition: 'all 0.2s',
-                    display: 'flex', alignItems: 'center', gap: 16,
-                    color: 'var(--text)',
-                  }}
-                >
-                  {/* Module circle */}
+                {/* Left: connector line + node */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 52, flexShrink: 0 }}>
                   <div style={{
-                    width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-                    background: mod.unlocked ? colors.icon : 'var(--border)',
+                    width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                    background: isLocked ? 'var(--bg-subtle)' : nodeGradient,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontWeight: 900, fontSize: '1.1rem',
-                    boxShadow: mod.unlocked && !mod.completed ? '0 0 0 4px rgba(26,127,75,0.15)' : 'none',
+                    color: isLocked ? 'var(--text-subtle)' : '#fff',
+                    fontWeight: 900, fontSize: '1rem',
+                    boxShadow: isActive ? '0 0 0 4px rgba(233,30,140,0.12)' : isCompleted ? '0 0 0 4px rgba(0,212,170,0.1)' : 'none',
+                    transition: 'all 0.2s',
+                    border: isLocked ? '1px solid var(--border)' : 'none',
                   }}>
-                    {!mod.unlocked ? <Lock size={20} /> : mod.completed ? '\u2714' : isExam ? <Trophy size={22} /> : mod.order}
+                    {isLocked ? <Lock size={17} /> : isCompleted ? '✓' : isExam ? <Trophy size={19} /> : <span>{mod.order}</span>}
                   </div>
+                  {!isLast && (
+                    <div style={{
+                      width: 2, flex: 1, minHeight: 20,
+                      background: isCompleted ? 'linear-gradient(180deg, rgba(0,212,170,0.4), rgba(0,212,170,0.1))' : 'var(--border)',
+                      margin: '4px 0',
+                    }} />
+                  )}
+                </div>
 
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        {isExam ? 'Examen Final' : `Modulo ${mod.order}`}
-                      </span>
-                      {mod.completed && (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(63,185,80,0.15)', color: 'var(--success)', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>Completado</span>
-                      )}
-                      {!mod.unlocked && (
-                        <span style={{ fontSize: '0.68rem', background: 'var(--bg-subtle)', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>Bloqueado</span>
-                      )}
+                {/* Right: card */}
+                <div style={{ flex: 1, paddingBottom: isLast ? 0 : 12, paddingLeft: 14 }}>
+                  <button
+                    onClick={() => openModule(mod)}
+                    disabled={isLocked}
+                    style={{
+                      width: '100%', textAlign: 'left', borderRadius: 14,
+                      padding: '16px 18px',
+                      background: cardBg, border: cardBorder,
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      opacity: isLocked ? 0.5 : 1,
+                      transition: 'all 0.18s',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    {/* Top row */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: isExam && isActive ? '#F5A623' : 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>
+                          {isExam ? '🏆 Examen Final' : `Módulo ${mod.order}`}
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '0.97rem', lineHeight: 1.3, color: isLocked ? 'var(--text-muted)' : 'var(--text)' }}>
+                          {mod.title}
+                        </div>
+                      </div>
+                      {/* Right badge */}
+                      <div style={{ flexShrink: 0 }}>
+                        {isCompleted && mod.score > 0 ? (
+                          <span style={{ fontSize: '1rem', fontWeight: 900, color: '#00D4AA' }}>{mod.score}%</span>
+                        ) : isCompleted ? (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'rgba(0,212,170,0.12)', color: '#00D4AA', border: '1px solid rgba(0,212,170,0.2)', padding: '3px 9px', borderRadius: 20 }}>✓ Listo</span>
+                        ) : isLocked ? (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-subtle)' }}>🔒</span>
+                        ) : (
+                          <ChevronRight size={18} color="var(--text-subtle)" />
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>{mod.title}</div>
 
-                    {/* Section dots for lesson modules */}
-                    {s && !mod.completed && mod.unlocked && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
-                        <SectionBadge done={s.info.completed} label="Lectura" icon={<BookOpen size={12} />} />
-                        {s.video.hasVideo && <SectionBadge done={s.video.completed} label="Video" icon={<Play size={12} />} />}
-                        <SectionBadge done={s.quiz.completed} label="Quiz" icon={<FileQuestion size={12} />} />
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-subtle)', marginLeft: 'auto' }}>{sectionsDone}/{sectionsTotal}</span>
+                    {/* Section steps — lesson modules */}
+                    {steps.length > 0 && !isLocked && (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                        {steps.map((st, si) => (
+                          <div key={si} style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            fontSize: '0.75rem', fontWeight: st.done ? 700 : 500,
+                            background: st.done ? 'rgba(0,212,170,0.1)' : 'var(--bg-overlay)',
+                            border: `1px solid ${st.done ? 'rgba(0,212,170,0.25)' : 'var(--border)'}`,
+                            color: st.done ? '#00D4AA' : 'var(--text-subtle)',
+                            padding: '4px 10px', borderRadius: 20,
+                          }}>
+                            <span style={{ fontSize: '0.75rem' }}>{st.done ? '✓' : st.icon}</span>
+                            {st.label}
+                          </div>
+                        ))}
                       </div>
                     )}
 
-                    {isExam && !mod.completed && (
-                      <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        <span>10 preguntas de los 3 modulos</span>
-                        <span>Min. 80%</span>
+                    {/* Exam info */}
+                    {isExam && !isCompleted && isActive && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                        {['10 preguntas', 'Mín. 80%', 'Certificado NFT'].map((tag) => (
+                          <span key={tag} style={{ fontSize: '0.72rem', fontWeight: 600, background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.2)', color: '#F5A623', padding: '3px 9px', borderRadius: 20 }}>
+                            {tag}
+                          </span>
+                        ))}
                       </div>
                     )}
-                  </div>
 
-                  {/* Score or arrow */}
-                  {mod.score > 0 ? (
-                    <div style={{ fontWeight: 900, fontSize: '1.2rem', color: mod.score >= 80 ? 'var(--success)' : 'var(--accent)', flexShrink: 0 }}>
-                      {mod.score}%
-                    </div>
-                  ) : mod.unlocked ? (
-                    <ChevronRight size={20} color="var(--text-subtle)" style={{ flexShrink: 0 }} />
-                  ) : null}
-                </button>
+                    {/* Locked exam — free user */}
+                    {isExam && isLocked && (
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-subtle)', margin: '6px 0 0', lineHeight: 1.5 }}>
+                        Requiere suscripción Premium o pago del certificado ($10 USD)
+                      </p>
+                    )}
+                  </button>
+                </div>
               </motion.div>
             );
           })}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SectionBadge({ done, label, icon }: { done: boolean; label: string; icon: React.ReactNode }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem',
-      color: done ? 'var(--success)' : 'var(--text-subtle)',
-      fontWeight: done ? 700 : 400,
-    }}>
-      {icon}
-      <span>{done ? '\u2714' : label}</span>
     </div>
   );
 }
