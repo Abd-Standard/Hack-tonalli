@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronRight, Users, BookOpen, Coins, Shield, Zap, Globe } from 'lucide-react';
+import { ChevronRight, Users, BookOpen, Coins, Shield, Zap, Globe, Star } from 'lucide-react';
 
 const fadeUp = {
   initial: { y: 32, opacity: 0 },
@@ -10,6 +10,25 @@ const fadeUp = {
 const stagger = {
   animate: { transition: { staggerChildren: 0.08 } },
 };
+
+// Star dot positions for decorative background
+const starDots = [
+  { top: '8%',  left: '12%',  size: 2, opacity: 0.6, gold: false },
+  { top: '15%', left: '78%',  size: 3, opacity: 0.8, gold: true  },
+  { top: '22%', left: '5%',   size: 2, opacity: 0.5, gold: false },
+  { top: '28%', left: '90%',  size: 2, opacity: 0.6, gold: false },
+  { top: '35%', left: '18%',  size: 1, opacity: 0.4, gold: false },
+  { top: '42%', left: '85%',  size: 3, opacity: 0.7, gold: true  },
+  { top: '55%', left: '8%',   size: 2, opacity: 0.5, gold: false },
+  { top: '60%', left: '93%',  size: 2, opacity: 0.6, gold: false },
+  { top: '70%', left: '22%',  size: 1, opacity: 0.4, gold: false },
+  { top: '75%', left: '72%',  size: 3, opacity: 0.7, gold: true  },
+  { top: '12%', left: '45%',  size: 1, opacity: 0.3, gold: false },
+  { top: '80%', left: '55%',  size: 2, opacity: 0.5, gold: false },
+  { top: '5%',  left: '62%',  size: 2, opacity: 0.6, gold: false },
+  { top: '48%', left: '3%',   size: 1, opacity: 0.4, gold: false },
+  { top: '88%', left: '35%',  size: 2, opacity: 0.5, gold: true  },
+];
 
 export function Landing() {
   return (
@@ -26,69 +45,81 @@ export function Landing() {
         padding: '80px 24px 60px',
         position: 'relative',
         overflow: 'hidden',
+        background: '#0A0E17',
       }}>
-        {/* Subtle grid background */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-          opacity: 0.18,
-          maskImage: 'radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%)',
-        }} />
 
-        {/* Glow blobs */}
-        <div style={{
-          position: 'absolute', top: '15%', left: '8%',
-          width: 480, height: 480,
-          background: 'radial-gradient(circle, rgba(26,127,75,0.12) 0%, transparent 68%)',
-          borderRadius: '50%', pointerEvents: 'none', filter: 'blur(2px)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '10%', right: '8%',
-          width: 360, height: 360,
-          background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 68%)',
-          borderRadius: '50%', pointerEvents: 'none',
-        }} />
+        {/* Star dots */}
+        {starDots.map((dot, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            top: dot.top,
+            left: dot.left,
+            width: dot.size,
+            height: dot.size,
+            borderRadius: '50%',
+            background: dot.gold ? '#F5A623' : '#fff',
+            opacity: dot.opacity,
+            pointerEvents: 'none',
+          }} />
+        ))}
 
-        {/* Characters */}
-        <motion.div
-          style={{ display: 'flex', gap: 20, marginBottom: 40, alignItems: 'flex-end' }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-        >
-          <motion.img
-            src="/characters/alli.png"
-            alt="Alli"
-            className="float-delay"
-            style={{ width: 100, height: 100, objectFit: 'contain', filter: 'drop-shadow(0 8px 18px rgba(201,146,10,0.4))' }}
-            whileHover={{ scale: 1.08, rotate: -4 }}
-            draggable={false}
-          />
-          <motion.img
-            src="/characters/xollo.png"
-            alt="Xollo"
-            className="float-slow"
-            style={{ width: 140, height: 140, objectFit: 'contain', filter: 'drop-shadow(0 12px 26px rgba(139,92,246,0.4))' }}
-            whileHover={{ scale: 1.08 }}
-            draggable={false}
-          />
-          <motion.img
-            src="/characters/chima.png"
-            alt="Chima"
-            className="float-delay2"
-            style={{ width: 100, height: 100, objectFit: 'contain', filter: 'drop-shadow(0 8px 18px rgba(200,39,26,0.4))' }}
-            whileHover={{ scale: 1.08, rotate: 4 }}
-            draggable={false}
-          />
-        </motion.div>
+        {/* Characters: Chima left, Alli right */}
+        <motion.img
+          src="/characters/chima.png"
+          alt="Chima"
+          className="float-animation"
+          style={{
+            position: 'absolute', left: '4%', top: '30%',
+            transform: 'translateY(-70%)',
+            width: 350, height: 350, objectFit: 'contain',
+          }}
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          draggable={false}
+        />
+        <motion.img
+          src="/characters/alli.png"
+          alt="Alli"
+          className="float-slow"
+          style={{
+            position: 'absolute', right: '4%', top: '30%',
+            transform: 'translateY(-70%)',
+            width: 350, height: 350, objectFit: 'contain',
+          }}
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          draggable={false}
+        />
 
         <motion.div
           initial={{ y: 36, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
+          style={{ position: 'relative', zIndex: 1 }}
         >
-          <div className="badge badge-primary" style={{ marginBottom: 20 }}>
+          {/* Logo centered above text */}
+          <motion.div
+            style={{ marginBottom: 20 }}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <img
+              src="/logo.png"
+              alt="Tonalli"
+              style={{
+                width: 300, height: 300, objectFit: 'contain',
+                filter: 'drop-shadow(0 0 14px rgba(0,212,170,0.35)) drop-shadow(0 0 6px rgba(245,166,35,0.25))',
+              }}
+              draggable={false}
+            />
+          </motion.div>
+
+          {/* Stellar badge */}
+          <div className="badge badge-gold" style={{ marginBottom: 20, gap: 6 }}>
+            <Star size={11} fill="currentColor" />
             Powered by Stellar Blockchain
           </div>
 
@@ -121,10 +152,10 @@ export function Landing() {
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register" className="btn btn-primary btn-lg">
-              Empieza gratis <ChevronRight size={18} />
+              Comenzar Ahora <ChevronRight size={18} />
             </Link>
-            <Link to="/login" className="btn btn-secondary btn-lg">
-              Iniciar sesión
+            <Link to="/login" className="btn btn-ghost btn-lg">
+              Entrar
             </Link>
           </div>
         </motion.div>
@@ -134,6 +165,7 @@ export function Landing() {
           style={{
             display: 'flex', gap: 40, marginTop: 64,
             justifyContent: 'center', flexWrap: 'wrap',
+            position: 'relative', zIndex: 1,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -145,7 +177,7 @@ export function Landing() {
             { icon: <Coins size={16} />,   value: '500 XLM',  label: 'Distribuidos en red' },
           ].map((stat, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--primary)', justifyContent: 'center', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--gold)', justifyContent: 'center', marginBottom: 6 }}>
                 {stat.icon}
               </div>
               <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
@@ -185,7 +217,7 @@ export function Landing() {
                 step: '01',
                 icon: <BookOpen size={22} />,
                 title: 'Aprende',
-                accent: 'var(--success)',
+                accent: '#E91E8C',
                 description: 'Lecciones cortas sobre blockchain, Stellar, DeFi y NFTs. En español, con ejemplos aplicados a México y LATAM.',
                 cta: 'Chima te guía',
                 char: 'chima',
@@ -194,7 +226,7 @@ export function Landing() {
                 step: '02',
                 icon: <Zap size={22} />,
                 title: 'Completa quizzes',
-                accent: 'var(--accent-light)',
+                accent: '#F5A623',
                 description: 'Pon a prueba tu conocimiento. Cada respuesta correcta suma XP y te acerca a lecciones avanzadas.',
                 cta: 'Alli te desafía',
                 char: 'alli',
@@ -203,7 +235,7 @@ export function Landing() {
                 step: '03',
                 icon: <Coins size={22} />,
                 title: 'Gana recompensas',
-                accent: 'var(--purple)',
+                accent: '#00D4AA',
                 description: 'Completa módulos y recibe XLM real en tu wallet Stellar. Además obtén certificados NFT on-chain.',
                 cta: 'Xollo cuida tu racha',
                 char: 'xollo',
@@ -216,10 +248,10 @@ export function Landing() {
                 style={{ padding: 28, position: 'relative', overflow: 'hidden' }}
                 whileHover={{ y: -4, borderColor: 'var(--border-active)' }}
               >
-                {/* White frosted shimmer */}
+                {/* Frosted shimmer */}
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: 56,
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.055) 0%, transparent 100%)',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%)',
                   borderRadius: '10px 10px 0 0',
                   pointerEvents: 'none',
                 }} />
@@ -290,8 +322,8 @@ export function Landing() {
                 image: '/characters/chima.png',
                 name: 'Chima',
                 role: 'Guía Maestra',
-                accent: '#C8271A',
-                glow: 'rgba(200,39,26,0.3)',
+                accent: '#E91E8C',
+                glow: 'rgba(233,30,140,0.32)',
                 description: 'Mariachi de corazón, maestra de blockchain. Chima explica cada concepto con claridad y paciencia. Nunca te deja atrás.',
                 animClass: 'float-animation',
               },
@@ -299,8 +331,8 @@ export function Landing() {
                 image: '/characters/alli.png',
                 name: 'Alli',
                 role: 'Desafiador',
-                accent: 'var(--accent-light)',
-                glow: 'rgba(201,146,10,0.3)',
+                accent: '#F5A623',
+                glow: 'rgba(245,166,35,0.32)',
                 description: 'El más competitivo del metaverso. Alli te reta constantemente a superar tus récords y mejorar tu racha.',
                 animClass: 'float-slow',
               },
@@ -308,8 +340,8 @@ export function Landing() {
                 image: '/characters/xollo.png',
                 name: 'Xollo',
                 role: 'Guardián de Racha',
-                accent: 'var(--purple)',
-                glow: 'rgba(139,92,246,0.3)',
+                accent: '#00D4AA',
+                glow: 'rgba(0,212,170,0.32)',
                 description: 'El xoloescuincle más leal de la blockchain. Cuida tu racha diaria y celebra contigo cada logro.',
                 animClass: 'float-delay',
               },
@@ -381,14 +413,14 @@ export function Landing() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
             {[
-              { icon: <Shield size={16} />,  topic: 'Blockchain Básico',   level: 'Principiante', accent: 'var(--success)' },
-              { icon: <Coins size={16} />,   topic: 'Stellar & XLM',       level: 'Principiante', accent: 'var(--accent-light)' },
-              { icon: <Zap size={16} />,     topic: 'Wallets & Seguridad', level: 'Intermedio',   accent: 'var(--blue)' },
-              { icon: <Globe size={16} />,   topic: 'DeFi en México',      level: 'Intermedio',   accent: 'var(--purple)' },
-              { icon: <Coins size={16} />,   topic: 'NFTs & Arte Digital', level: 'Avanzado',     accent: '#e879f9' },
-              { icon: <Shield size={16} />,  topic: 'Smart Contracts',     level: 'Avanzado',     accent: 'var(--danger)' },
-              { icon: <BookOpen size={16} />,topic: 'Trading Responsable', level: 'Intermedio',   accent: 'var(--success)' },
-              { icon: <Globe size={16} />,   topic: 'Web3 y Sociedad',     level: 'Todos',        accent: 'var(--text-muted)' },
+              { icon: <Shield size={16} />,  topic: 'Blockchain Básico',   level: 'Principiante', accent: '#E91E8C' },
+              { icon: <Coins size={16} />,   topic: 'Stellar & XLM',       level: 'Principiante', accent: '#00D4AA' },
+              { icon: <Zap size={16} />,     topic: 'Wallets & Seguridad', level: 'Intermedio',   accent: '#F5A623' },
+              { icon: <Globe size={16} />,   topic: 'DeFi en México',      level: 'Intermedio',   accent: '#E91E8C' },
+              { icon: <Coins size={16} />,   topic: 'NFTs & Arte Digital', level: 'Avanzado',     accent: '#FFD60A' },
+              { icon: <Shield size={16} />,  topic: 'Smart Contracts',     level: 'Avanzado',     accent: '#00D4AA' },
+              { icon: <BookOpen size={16} />,topic: 'Trading Responsable', level: 'Intermedio',   accent: '#F5A623' },
+              { icon: <Globe size={16} />,   topic: 'Web3 y Sociedad',     level: 'Todos',        accent: '#E91E8C' },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -418,19 +450,19 @@ export function Landing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div style={{ marginBottom: 28, position: 'relative', display: 'inline-block' }}>
+          <div style={{ marginBottom: 10, position: 'relative', display: 'inline-block' }}>
             <div style={{
               position: 'absolute', top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
               width: 100, height: 100, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%)',
+              background: 'radial-gradient(circle, rgba(0,212,170,0.3), transparent 70%)',
               filter: 'blur(18px)', pointerEvents: 'none',
             }} />
             <img
               src="/characters/xollo.png"
               alt="Xollo"
               className="float-slow"
-              style={{ width: 130, height: 130, objectFit: 'contain', position: 'relative', filter: 'drop-shadow(0 10px 24px rgba(139,92,246,0.5))' }}
+              style={{ width: 300, height: 300, objectFit: 'contain', position: 'relative', filter: 'drop-shadow(0 10px 12px rgba(0,212,170,0.5))' }}
               draggable={false}
             />
           </div>
@@ -446,7 +478,7 @@ export function Landing() {
             Crear cuenta gratis <ChevronRight size={18} />
           </Link>
           <p style={{ marginTop: 14, color: 'var(--text-subtle)', fontSize: '0.8rem' }}>
-            
+
           </p>
         </motion.div>
       </section>
@@ -461,13 +493,7 @@ export function Landing() {
         flexWrap: 'wrap',
         gap: 12,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/logo.png" alt="Tonalli" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-          <span style={{ fontWeight: 600, fontSize: '0.88rem', fontFamily: "'Space Grotesk', sans-serif" }}>Tonalli</span>
-        </div>
-        <div style={{ color: 'var(--text-subtle)', fontSize: '0.78rem' }}>
-          Built on Stellar Blockchain · 2024
-        </div>
+        
       </footer>
     </div>
   );

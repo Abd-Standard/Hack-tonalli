@@ -22,6 +22,15 @@ export class UsersController {
     return this.usersService.getProfile(updated.id);
   }
 
+  @Patch('users/me/setup')
+  @UseGuards(JwtAuthGuard)
+  async setupUser(
+    @Req() req,
+    @Body() body: { companion: string; avatarType: string },
+  ) {
+    return this.usersService.setupUser(req.user.id, body.companion, body.avatarType);
+  }
+
   @Get('rankings')
   async getRankings() {
     return this.usersService.getRankings();

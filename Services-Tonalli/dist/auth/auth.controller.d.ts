@@ -16,6 +16,9 @@ export declare class AuthController {
             character: string;
             role: "user" | "admin";
             isPremium: boolean;
+            isFirstLogin: boolean;
+            companion: string;
+            avatarType: string;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -32,6 +35,9 @@ export declare class AuthController {
             character: string;
             role: "user" | "admin";
             isPremium: boolean;
+            isFirstLogin: boolean;
+            companion: string;
+            avatarType: string;
         };
     }>;
 }

@@ -1,169 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Trophy, Lock, CheckCircle, PlayCircle, ChevronRight } from 'lucide-react';
+import { Zap, Trophy, Lock, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { apiService } from '../services/api';
-import type { Module, Lesson, LeaderboardEntry } from '../types';
+import type { LeaderboardEntry } from '../types';
 
-function LessonNode({ lesson, index }: { lesson: Lesson; index: number }) {
-  const isLeft = index % 2 === 0;
 
-  const bgColor = lesson.status === 'completed'
-    ? 'var(--success)'
-    : lesson.status === 'available'
-    ? 'var(--primary)'
-    : 'var(--border)';
-
-  const icon = lesson.status === 'completed'
-    ? <CheckCircle size={28} color="white" />
-    : lesson.status === 'available'
-    ? <PlayCircle size={28} color="white" />
-    : <Lock size={24} color="var(--text-muted)" />;
-
-  const content = (
-    <motion.div
-      initial={{ opacity: 0, x: isLeft ? -30 : 30 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      style={{ display: 'flex', alignItems: 'center', gap: 16, maxWidth: 280 }}
-    >
-      <div style={{
-        flex: 1,
-        background: 'var(--card)',
-        border: `1px solid ${lesson.status === 'available' ? 'rgba(46,139,63,0.4)' : 'var(--border)'}`,
-        borderRadius: 14,
-        padding: '14px 18px',
-        opacity: lesson.status === 'locked' ? 0.5 : 1,
-      }}>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 4 }}>
-          {lesson.type === 'quiz' ? '\uD83D\uDCDD Quiz' : '\uD83D\uDCD6 Leccion'}
-        </div>
-        <div style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: 6 }}>{lesson.title}</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700 }}>+{lesson.xpReward} XP</span>
-          {lesson.xlmReward > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>+{lesson.xlmReward} XLM</span>}
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  const nodeButton = lesson.status !== 'locked' ? (
-    <Link to={`/learn/${lesson.id}`} style={{ textDecoration: 'none' }}>
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          background: bgColor,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: lesson.status === 'available' ? '0 0 0 6px rgba(46,139,63,0.2), 0 0 0 12px rgba(46,139,63,0.1)' : 'none',
-          flexShrink: 0,
-          cursor: 'pointer',
-          border: '3px solid rgba(255,255,255,0.1)',
-        }}
-        className={lesson.status === 'available' ? 'pulse-glow' : ''}
-      >
-        {icon}
-      </motion.div>
-    </Link>
-  ) : (
-    <div style={{
-      width: 64, height: 64, borderRadius: '50%',
-      background: 'var(--card)', border: '3px solid var(--border)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-    }}>
-      {icon}
-    </div>
-  );
-
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 0,
-      flexDirection: isLeft ? 'row' : 'row-reverse',
-    }}>
-      <div style={{ width: 280, display: 'flex', justifyContent: isLeft ? 'flex-end' : 'flex-start' }}>
-        {content}
-      </div>
-      <div style={{ width: 80, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-        {nodeButton}
-      </div>
-      <div style={{ width: 280 }} />
-    </div>
-  );
-}
-
-function ModuleSection({ module }: { module: Module }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 16,
-          margin: '32px 0 24px',
-        }}
-      >
-        <div style={{ height: 2, flex: 1, maxWidth: 120, background: 'var(--border)' }} />
-        <div style={{
-          background: module.status === 'locked' ? 'var(--card)' : module.color + '20',
-          border: `2px solid ${module.status === 'locked' ? 'var(--border)' : module.color}`,
-          borderRadius: 40,
-          padding: '10px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          opacity: module.status === 'locked' ? 0.5 : 1,
-        }}>
-          <span style={{ fontSize: '1.5rem' }}>{module.icon}</span>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: '0.95rem' }}>{module.title}</div>
-            {module.status === 'locked' && (
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Requiere {module.xpRequired} XP</div>
-            )}
-          </div>
-        </div>
-        <div style={{ height: 2, flex: 1, maxWidth: 120, background: 'var(--border)' }} />
-      </motion.div>
-
-      <div style={{ position: 'relative' }}>
-        <div style={{
-          position: 'absolute',
-          left: '50%',
-          top: 0,
-          bottom: 0,
-          width: 3,
-          background: `linear-gradient(180deg, ${module.color}40, var(--border))`,
-          transform: 'translateX(-50%)',
-          zIndex: 0,
-        }} />
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, position: 'relative', zIndex: 1 }}>
-          {module.lessons.map((lesson, i) => (
-            <LessonNode key={lesson.id} lesson={lesson} index={i} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function Dashboard() {
   const { user, setUser } = useAuthStore();
-  const { modules, loadModules, completedLessons, dailyStreak } = useProgressStore();
+  const { loadModules, dailyStreak } = useProgressStore();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [chapters, setChapters] = useState<any[]>([]);
 
@@ -210,7 +58,6 @@ export function Dashboard() {
 
   // Find first accessible chapter for daily challenge
   const firstAvailableChapter = chapters.find((c: any) => c.accessible !== false);
-  const firstAvailable = modules.flatMap((m) => m.lessons).find((l) => l.status === 'available');
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -229,7 +76,11 @@ export function Dashboard() {
                 border: '3px solid var(--primary)',
               }}>
                 <img
-                  src={`/characters/${'chima'}.png`}
+                  src={`/characters/${
+                    user.avatarType === 'mariachi_hombre' ? 'alli' :
+                    user.avatarType === 'mariachi_mujer'  ? 'chima' :
+                    user.companion || 'chima'
+                  }.png`}
                   alt={user.username}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

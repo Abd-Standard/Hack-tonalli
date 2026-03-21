@@ -12,6 +12,7 @@ import { ChapterProgress } from './entities/chapter-progress.entity';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { User } from '../users/entities/user.entity';
+import { SorobanService } from '../stellar/soroban.service';
 
 interface QuizQuestion {
   id: string;
@@ -32,6 +33,7 @@ export class ChaptersService {
     private readonly progressRepo: Repository<ChapterProgress>,
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    private readonly sorobanService: SorobanService,
   ) {}
 
   // ── Admin CRUD ───────────────────────────────────────────────────────────
@@ -466,6 +468,25 @@ export class ChaptersService {
         user.xp += mod.xpReward;
         user.totalXp += mod.xpReward;
         await this.usersRepo.save(user);
+
+        // Trigger NFT mint for final exam completion
+        if (user.stellarPublicKey) {
+          try {
+            const chapter = await this.chaptersRepo.findOne({ where: { id: mod.chapterId } });
+            await this.sorobanService.mintCertificate({
+              userPublicKey: user.stellarPublicKey,
+              lessonId: mod.chapterId,
+              moduleId: mod.id,
+              username: user.username,
+              score,
+              xpEarned: mod.xpReward,
+              metadataUri: `https://tonalli.app/certificates/${mod.chapterId}`,
+            });
+          } catch (e) {
+            // Non-blocking: log but don't fail the quiz submission
+            console.error('NFT mint error:', e.message);
+          }
+        }
       } else if (!isFinalExam && !progress.quizCompleted) {
         progress.quizCompleted = true;
         progress.quizScore = Math.max(progress.quizScore, score);

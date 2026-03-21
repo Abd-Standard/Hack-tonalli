@@ -20,6 +20,9 @@ export declare class User {
     subscriptionExpiry: Date;
     dateOfBirth: string;
     character: string;
+    isFirstLogin: boolean;
+    companion: string;
+    avatarType: string;
     progress: Progress[];
     certificates: NFTCertificate[];
     streaks: Streak[];

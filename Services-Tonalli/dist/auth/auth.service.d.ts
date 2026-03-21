@@ -20,6 +20,9 @@ export declare class AuthService {
             character: string;
             role: "user" | "admin";
             isPremium: boolean;
+            isFirstLogin: boolean;
+            companion: string;
+            avatarType: string;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -36,6 +39,9 @@ export declare class AuthService {
             character: string;
             role: "user" | "admin";
             isPremium: boolean;
+            isFirstLogin: boolean;
+            companion: string;
+            avatarType: string;
         };
     }>;
 }

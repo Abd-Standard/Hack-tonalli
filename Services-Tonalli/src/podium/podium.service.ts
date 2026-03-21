@@ -1,4 +1,5 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WeeklyScore } from './entities/weekly-score.entity';
@@ -161,6 +162,17 @@ export class PodiumService {
     this.logger.log('✅ Podium rewards RESUMED');
   }
 
+  // Cron: close weekly podium every Sunday at 23:59 CDMX (America/Mexico_City)
+  @Cron('59 23 * * 0', { timeZone: 'America/Mexico_City' })
+  async handleWeeklyPodiumClose() {
+    this.logger.log('[Podium] Closing weekly podium - Sunday 23:59 CDMX');
+    try {
+      await this.distributeWeeklyRewards();
+    } catch (e) {
+      this.logger.error('[Podium] Weekly distribution error:', e.message);
+    }
+  }
+
   // Distribute weekly rewards (called by admin or cron)
   async distributeWeeklyRewards(week?: string) {
     if (this.paused) {
@@ -198,14 +210,35 @@ export class PodiumService {
         const xlmAmount = (rewardUsd / 0.15).toFixed(2); // Approximate rate
         reward.rewardXlm = xlmAmount;
 
+        // TODO: Set REWARD_POOL_SECRET in .env — the funded Stellar account that sends rewards
+        const rewardPoolSecret = process.env.REWARD_POOL_SECRET;
+        let txHash = `SIMULATED_REWARD_${targetWeek}_${i + 1}_${Date.now()}`;
+
         try {
-          // In production, this would come from a funded reward pool wallet
-          reward.status = 'paid';
-          reward.txHash = `REWARD_${targetWeek}_${i + 1}_${Date.now()}`;
+          if (rewardPoolSecret) {
+            const result = await this.stellarService.sendXLMReward(
+              rewardPoolSecret,
+              user.stellarPublicKey,
+              xlmAmount,
+            );
+            if (result.success && result.txHash) {
+              txHash = result.txHash;
+              reward.status = 'paid';
+            } else {
+              this.logger.error(`XLM transfer failed for ${user.username}: ${result.error}`);
+              reward.status = 'pending';
+            }
+          } else {
+            // No reward pool configured — simulate
+            this.logger.warn('[Podium] REWARD_POOL_SECRET not set, using simulated txHash');
+            reward.status = 'paid';
+          }
         } catch (err) {
           this.logger.error(`Reward payment failed for ${user.username}: ${err.message}`);
           reward.status = 'pending';
         }
+
+        reward.txHash = txHash;
       } else {
         // No wallet — retain for 7 days
         reward.status = 'retained';

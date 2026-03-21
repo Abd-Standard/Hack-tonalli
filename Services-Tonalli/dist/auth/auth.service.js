@@ -110,6 +110,9 @@ let AuthService = class AuthService {
                 character: user.character,
                 role: user.role || 'user',
                 isPremium: user.isPremium || false,
+                isFirstLogin: user.isFirstLogin,
+                companion: user.companion,
+                avatarType: user.avatarType,
             },
         };
     }
@@ -135,6 +138,9 @@ let AuthService = class AuthService {
                 character: user.character,
                 role: user.role || 'user',
                 isPremium: user.isPremium || false,
+                isFirstLogin: user.isFirstLogin,
+                companion: user.companion,
+                avatarType: user.avatarType,
             },
         };
     }

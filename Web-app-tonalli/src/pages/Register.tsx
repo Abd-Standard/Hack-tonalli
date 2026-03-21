@@ -4,10 +4,14 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, MapPin, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
-const CITIES = [
-  'Ciudad de México', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana',
-  'Mérida', 'Oaxaca', 'Cancún', 'Querétaro', 'San Luis Potosí',
-  'León', 'Chihuahua', 'Veracruz', 'Aguascalientes', 'Otra',
+const ESTADOS = [
+  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche',
+  'Chiapas', 'Chihuahua', 'Ciudad de México', 'Coahuila', 'Colima',
+  'Durango', 'Estado de México', 'Guanajuato', 'Guerrero', 'Hidalgo',
+  'Jalisco', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca',
+  'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa',
+  'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz',
+  'Yucatán', 'Zacatecas',
 ];
 
 export function Register() {
@@ -42,9 +46,14 @@ export function Register() {
     if (age < 18) { setError('Debes ser mayor de 18 años para registrarte'); return; }
     try {
       await register(username, email, password, city, dateOfBirth);
-      navigate('/dashboard');
-    } catch {
-      setError('Error al registrarse. Intenta de nuevo.');
+      const { user } = useAuthStore.getState();
+      navigate(user?.isFirstLogin ? '/welcome' : '/dashboard');
+    } catch (err: any) {
+      if (err?.response?.status === 409) {
+        setError('El correo o nombre de usuario ya está registrado.');
+      } else {
+        setError('Error al registrarse. Intenta de nuevo.');
+      }
     }
   };
 
@@ -192,6 +201,7 @@ export function Register() {
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
                   max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                  style={{ colorScheme: 'dark' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
                   Debes ser mayor de 18 años
@@ -199,7 +209,7 @@ export function Register() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Ciudad</label>
+                <label className="form-label">Estado</label>
                 <div style={{ position: 'relative' }}>
                   <MapPin size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', zIndex: 1 }} />
                   <select
@@ -208,8 +218,8 @@ export function Register() {
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   >
-                    <option value="">Selecciona tu ciudad</option>
-                    {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <option value="">Selecciona tu estado</option>
+                    {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
                   </select>
                 </div>
               </div>

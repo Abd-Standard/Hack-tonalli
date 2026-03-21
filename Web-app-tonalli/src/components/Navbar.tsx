@@ -47,9 +47,10 @@ export function Navbar() {
           fontWeight: 700,
           fontFamily: "'Space Grotesk', sans-serif",
           letterSpacing: '-0.02em',
-          color: 'var(--text)',
+          color: '#F5A623',
+          textTransform: 'uppercase',
         }}>
-          Tonalli
+          TONALLI
         </span>
       </Link>
 
@@ -60,24 +61,24 @@ export function Navbar() {
           {dailyStreak > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              background: 'rgba(200,39,26,0.1)',
+              background: 'rgba(233,30,140,0.1)',
               padding: '5px 10px', borderRadius: 6,
-              border: '1px solid rgba(200,39,26,0.2)',
+              border: '1px solid rgba(233,30,140,0.25)',
             }}>
               <span className="streak-fire" style={{ fontSize: '0.95rem' }}>🔥</span>
-              <span style={{ fontWeight: 600, color: '#e05c52', fontSize: '0.85rem' }}>{dailyStreak}</span>
+              <span style={{ fontWeight: 600, color: '#FF6AC1', fontSize: '0.85rem' }}>{dailyStreak}</span>
             </div>
           )}
 
           {/* XP */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(201,146,10,0.1)',
+            background: 'rgba(245,166,35,0.1)',
             padding: '5px 10px', borderRadius: 6,
-            border: '1px solid rgba(201,146,10,0.2)',
+            border: '1px solid rgba(245,166,35,0.22)',
           }}>
-            <Zap size={13} color="var(--accent-light)" />
-            <span style={{ fontWeight: 600, color: 'var(--accent-light)', fontSize: '0.85rem' }}>
+            <Zap size={13} color="#F5A623" />
+            <span style={{ fontWeight: 600, color: '#F5A623', fontSize: '0.85rem' }}>
               {user.xp.toLocaleString()}
             </span>
           </div>
@@ -95,8 +96,21 @@ export function Navbar() {
             <Trophy size={17} />
           </Link>
 
+          {!user?.isPremium && (
+            <Link to="/premium" style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'linear-gradient(135deg, rgba(245,166,35,0.15), rgba(233,30,140,0.15))',
+              border: '1px solid rgba(245,166,35,0.3)',
+              borderRadius: 6, padding: '4px 10px',
+              textDecoration: 'none', fontSize: '0.78rem', fontWeight: 700,
+              color: '#F5A623',
+            }}>
+              Premium
+            </Link>
+          )}
+
           {user?.role === 'admin' && (
-            <Link to="/admin" style={{ color: 'var(--accent-light)', textDecoration: 'none', padding: '6px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }} title="Panel Admin">
+            <Link to="/admin" style={{ color: 'var(--gold)', textDecoration: 'none', padding: '6px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }} title="Panel Admin">
               <Shield size={17} />
             </Link>
           )}
@@ -105,7 +119,7 @@ export function Navbar() {
           <Link to="/profile" style={{ textDecoration: 'none', marginLeft: 4 }}>
             <div style={{
               width: 32, height: 32, borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+              background: 'linear-gradient(135deg, #F5A623, #E91E8C)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.78rem', fontWeight: 700, color: '#fff',
               border: '1.5px solid var(--border-active)',

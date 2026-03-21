@@ -15,6 +15,9 @@ export interface User {
   avatarUrl?: string;
   character?: string;
   nftCertificates: NFTCertificate[];
+  isFirstLogin?: boolean;
+  companion?: string;
+  avatarType?: string;
 }
 
 export interface Chapter {

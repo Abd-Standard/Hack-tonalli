@@ -58,5 +58,6 @@ export declare class PodiumService {
     }[]>;
     pauseRewards(): void;
     resumeRewards(): void;
+    handleWeeklyPodiumClose(): Promise<void>;
     distributeWeeklyRewards(week?: string): Promise<PodiumReward[]>;
 }

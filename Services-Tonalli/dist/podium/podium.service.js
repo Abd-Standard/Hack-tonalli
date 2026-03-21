@@ -15,6 +15,7 @@ var PodiumService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PodiumService = void 0;
 const common_1 = require("@nestjs/common");
+const schedule_1 = require("@nestjs/schedule");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const weekly_score_entity_1 = require("./entities/weekly-score.entity");
@@ -144,6 +145,15 @@ let PodiumService = PodiumService_1 = class PodiumService {
         this.paused = false;
         this.logger.log('✅ Podium rewards RESUMED');
     }
+    async handleWeeklyPodiumClose() {
+        this.logger.log('[Podium] Closing weekly podium - Sunday 23:59 CDMX');
+        try {
+            await this.distributeWeeklyRewards();
+        }
+        catch (e) {
+            this.logger.error('[Podium] Weekly distribution error:', e.message);
+        }
+    }
     async distributeWeeklyRewards(week) {
         if (this.paused) {
             throw new common_1.ForbiddenException('Rewards distribution is paused (circuit breaker)');
@@ -172,14 +182,30 @@ let PodiumService = PodiumService_1 = class PodiumService {
             if (user.stellarPublicKey) {
                 const xlmAmount = (rewardUsd / 0.15).toFixed(2);
                 reward.rewardXlm = xlmAmount;
+                const rewardPoolSecret = process.env.REWARD_POOL_SECRET;
+                let txHash = `SIMULATED_REWARD_${targetWeek}_${i + 1}_${Date.now()}`;
                 try {
-                    reward.status = 'paid';
-                    reward.txHash = `REWARD_${targetWeek}_${i + 1}_${Date.now()}`;
+                    if (rewardPoolSecret) {
+                        const result = await this.stellarService.sendXLMReward(rewardPoolSecret, user.stellarPublicKey, xlmAmount);
+                        if (result.success && result.txHash) {
+                            txHash = result.txHash;
+                            reward.status = 'paid';
+                        }
+                        else {
+                            this.logger.error(`XLM transfer failed for ${user.username}: ${result.error}`);
+                            reward.status = 'pending';
+                        }
+                    }
+                    else {
+                        this.logger.warn('[Podium] REWARD_POOL_SECRET not set, using simulated txHash');
+                        reward.status = 'paid';
+                    }
                 }
                 catch (err) {
                     this.logger.error(`Reward payment failed for ${user.username}: ${err.message}`);
                     reward.status = 'pending';
                 }
+                reward.txHash = txHash;
             }
             else {
                 reward.status = 'retained';
@@ -192,6 +218,12 @@ let PodiumService = PodiumService_1 = class PodiumService {
     }
 };
 exports.PodiumService = PodiumService;
+__decorate([
+    (0, schedule_1.Cron)('59 23 * * 0', { timeZone: 'America/Mexico_City' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PodiumService.prototype, "handleWeeklyPodiumClose", null);
 exports.PodiumService = PodiumService = PodiumService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(weekly_score_entity_1.WeeklyScore)),

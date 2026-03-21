@@ -20,16 +20,19 @@ const chapter_entity_1 = require("./entities/chapter.entity");
 const chapter_module_entity_1 = require("./entities/chapter-module.entity");
 const chapter_progress_entity_1 = require("./entities/chapter-progress.entity");
 const user_entity_1 = require("../users/entities/user.entity");
+const soroban_service_1 = require("../stellar/soroban.service");
 let ChaptersService = class ChaptersService {
     chaptersRepo;
     modulesRepo;
     progressRepo;
     usersRepo;
-    constructor(chaptersRepo, modulesRepo, progressRepo, usersRepo) {
+    sorobanService;
+    constructor(chaptersRepo, modulesRepo, progressRepo, usersRepo, sorobanService) {
         this.chaptersRepo = chaptersRepo;
         this.modulesRepo = modulesRepo;
         this.progressRepo = progressRepo;
         this.usersRepo = usersRepo;
+        this.sorobanService = sorobanService;
     }
     async create(dto) {
         const chapter = this.chaptersRepo.create(dto);
@@ -398,6 +401,23 @@ let ChaptersService = class ChaptersService {
                 user.xp += mod.xpReward;
                 user.totalXp += mod.xpReward;
                 await this.usersRepo.save(user);
+                if (user.stellarPublicKey) {
+                    try {
+                        const chapter = await this.chaptersRepo.findOne({ where: { id: mod.chapterId } });
+                        await this.sorobanService.mintCertificate({
+                            userPublicKey: user.stellarPublicKey,
+                            lessonId: mod.chapterId,
+                            moduleId: mod.id,
+                            username: user.username,
+                            score,
+                            xpEarned: mod.xpReward,
+                            metadataUri: `https://tonalli.app/certificates/${mod.chapterId}`,
+                        });
+                    }
+                    catch (e) {
+                        console.error('NFT mint error:', e.message);
+                    }
+                }
             }
             else if (!isFinalExam && !progress.quizCompleted) {
                 progress.quizCompleted = true;
@@ -527,6 +547,7 @@ exports.ChaptersService = ChaptersService = __decorate([
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        soroban_service_1.SorobanService])
 ], ChaptersService);
 //# sourceMappingURL=chapters.service.js.map

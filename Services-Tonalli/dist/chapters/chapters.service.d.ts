@@ -5,12 +5,14 @@ import { ChapterProgress } from './entities/chapter-progress.entity';
 import { CreateChapterDto } from './dto/create-chapter.dto';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { User } from '../users/entities/user.entity';
+import { SorobanService } from '../stellar/soroban.service';
 export declare class ChaptersService {
     private readonly chaptersRepo;
     private readonly modulesRepo;
     private readonly progressRepo;
     private readonly usersRepo;
-    constructor(chaptersRepo: Repository<Chapter>, modulesRepo: Repository<ChapterModule>, progressRepo: Repository<ChapterProgress>, usersRepo: Repository<User>);
+    private readonly sorobanService;
+    constructor(chaptersRepo: Repository<Chapter>, modulesRepo: Repository<ChapterModule>, progressRepo: Repository<ChapterProgress>, usersRepo: Repository<User>, sorobanService: SorobanService);
     create(dto: CreateChapterDto): Promise<Chapter>;
     getCurrentWeek(): string;
     getNextWeek(): string;

@@ -18,7 +18,7 @@ export function Login() {
     try {
       await login(email, password);
       const { user } = useAuthStore.getState();
-      navigate(user?.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(user?.role === 'admin' ? '/admin' : (user?.isFirstLogin ? '/welcome' : '/dashboard'));
     } catch {
       setError('Credenciales incorrectas. Intenta de nuevo.');
     }
@@ -36,10 +36,10 @@ export function Login() {
     }}>
       {/* Background glow */}
       <div style={{
-        position: 'absolute', top: '25%', left: '50%', transform: 'translateX(-50%)',
-        width: 500, height: 500,
-        background: 'radial-gradient(circle, rgba(26,127,75,0.07) 0%, transparent 68%)',
-        borderRadius: '50%', pointerEvents: 'none',
+        position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
+        width: 500, height: 400,
+        background: 'radial-gradient(ellipse, rgba(233,30,140,0.1) 0%, transparent 70%)',
+        borderRadius: '50%', pointerEvents: 'none', filter: 'blur(30px)',
       }} />
 
       <motion.div
@@ -50,18 +50,11 @@ export function Login() {
       >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <motion.img
-            src="/characters/chima.png"
-            alt="Chima"
-            className="float-animation"
-            style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 16, filter: 'drop-shadow(0 6px 16px rgba(200,39,26,0.35))' }}
-            draggable={false}
-          />
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-            Bienvenido de regreso
+            Bienvenido a Tonalli
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Chima te extrañó. Continúa aprendiendo.
+            Continúa aprendiendo Web3.
           </p>
         </div>
 
@@ -73,8 +66,8 @@ export function Login() {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 style={{
-                  background: 'rgba(248,81,73,0.1)',
-                  border: '1px solid rgba(248,81,73,0.3)',
+                  background: 'rgba(255,71,87,0.1)',
+                  border: '1px solid rgba(255,71,87,0.3)',
                   borderRadius: 8,
                   padding: '11px 14px',
                   display: 'flex',
@@ -151,29 +144,15 @@ export function Login() {
           </form>
 
           <div style={{ textAlign: 'center', marginTop: 18 }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem' }}>
-              ¿No tienes cuenta?{' '}
-              <Link to="/register" style={{ color: 'var(--success)', fontWeight: 600, textDecoration: 'none' }}>
-                Regístrate gratis
-              </Link>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem', marginBottom: 12 }}>
+              ¿No tienes cuenta?
             </p>
+            <Link to="/register" className="btn btn-ghost btn-full" style={{ border: '1px solid var(--border-active)' }}>
+              Regístrate gratis
+            </Link>
           </div>
         </div>
 
-        {/* Demo hint */}
-        <div style={{
-          marginTop: 14,
-          padding: '11px 16px',
-          background: 'rgba(201,146,10,0.08)',
-          border: '1px solid rgba(201,146,10,0.2)',
-          borderRadius: 8,
-          textAlign: 'center',
-          fontSize: '0.82rem',
-          color: 'var(--accent-light)',
-          fontWeight: 500,
-        }}>
-          Modo demo — credenciales prellenadas
-        </div>
       </motion.div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

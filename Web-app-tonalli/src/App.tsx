@@ -13,6 +13,8 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { ChaptersPage } from './pages/ChaptersPage';
 import { ChapterFlow } from './pages/ChapterFlow';
 import { CertificatesPage } from './pages/CertificatesPage';
+import { WelcomeFlow } from './pages/WelcomeFlow';
+import { PremiumPage } from './pages/PremiumPage';
 import { useAuthStore } from './stores/authStore';
 
 const queryClient = new QueryClient({
@@ -34,7 +36,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
-  if (isAuthenticated) return <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  if (isAuthenticated) {
+    if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.isFirstLogin) return <Navigate to="/welcome" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -94,6 +100,14 @@ export default function App() {
 
           <Route path="/leaderboard" element={
             <ProtectedRoute><AppLayout><Leaderboard /></AppLayout></ProtectedRoute>
+          } />
+
+          <Route path="/welcome" element={
+            <ProtectedRoute><WelcomeFlow /></ProtectedRoute>
+          } />
+
+          <Route path="/premium" element={
+            <ProtectedRoute><AppLayout><PremiumPage /></AppLayout></ProtectedRoute>
           } />
 
           {/* Admin routes */}

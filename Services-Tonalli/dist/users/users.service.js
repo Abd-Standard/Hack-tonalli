@@ -67,6 +67,14 @@ let UsersService = class UsersService {
         user.lastActivityDate = today;
         return this.userRepository.save(user);
     }
+    async setupUser(userId, companion, avatarType) {
+        await this.userRepository.update(userId, {
+            companion,
+            avatarType,
+            isFirstLogin: false,
+        });
+        return this.findById(userId);
+    }
     async getProfile(userId) {
         const user = await this.findById(userId);
         return {
@@ -83,6 +91,9 @@ let UsersService = class UsersService {
             character: user.character,
             isPremium: user.isPremium || false,
             subscriptionExpiry: user.subscriptionExpiry,
+            isFirstLogin: user.isFirstLogin,
+            companion: user.companion,
+            avatarType: user.avatarType,
             createdAt: user.createdAt,
         };
     }

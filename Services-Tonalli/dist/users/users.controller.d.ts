@@ -8,5 +8,9 @@ export declare class UsersController {
         city?: string;
         character?: string;
     }): Promise<any>;
+    setupUser(req: any, body: {
+        companion: string;
+        avatarType: string;
+    }): Promise<import("./entities/user.entity").User>;
     getRankings(): Promise<any[]>;
 }

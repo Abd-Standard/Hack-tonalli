@@ -13,6 +13,7 @@ export const mockUser: User = {
   lessonsCompleted: 14,
   city: 'Ciudad de México',
   role: 'user',
+  isPremium: false,
   walletAddress: 'GDEMO...XLM1',
   nftCertificates: [
     {
@@ -211,7 +212,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
   'lesson-2': [
     {
       id: 'q1',
-      lessonId: 'lesson-2',
+
       question: '¿Qué es una blockchain?',
       options: [
         'Una base de datos centralizada de un banco',
@@ -224,7 +225,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
     },
     {
       id: 'q2',
-      lessonId: 'lesson-2',
+
       question: '¿Qué significa que la blockchain es "inmutable"?',
       options: [
         'Que puede ser modificada por los administradores',
@@ -237,7 +238,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
     },
     {
       id: 'q3',
-      lessonId: 'lesson-2',
+
       question: '¿Quién valida las transacciones en una blockchain?',
       options: [
         'Solo el gobierno',
@@ -252,7 +253,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
   'lesson-5': [
     {
       id: 'q4',
-      lessonId: 'lesson-5',
+
       question: '¿Para qué se usa principalmente la red Stellar?',
       options: [
         'Para juegos blockchain',
@@ -265,7 +266,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
     },
     {
       id: 'q5',
-      lessonId: 'lesson-5',
+
       question: '¿Cuánto tiempo tarda una transacción en Stellar?',
       options: [
         '10 minutos',
@@ -278,7 +279,7 @@ export const mockQuizQuestions: Record<string, QuizQuestion[]> = {
     },
     {
       id: 'q6',
-      lessonId: 'lesson-5',
+
       question: '¿Qué es XLM?',
       options: [
         'Una empresa de tecnología',

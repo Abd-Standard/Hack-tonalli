@@ -66,6 +66,15 @@ export class User {
   @Column({ nullable: true })
   character: string;
 
+  @Column({ default: true })
+  isFirstLogin: boolean;
+
+  @Column({ nullable: true })
+  companion: string; // 'chima' | 'alli'
+
+  @Column({ nullable: true })
+  avatarType: string; // 'mariachi_hombre' | 'mariachi_mujer'
+
   @OneToMany(() => Progress, (progress) => progress.user)
   progress: Progress[];
 

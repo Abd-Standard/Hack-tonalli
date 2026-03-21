@@ -84,6 +84,9 @@ export class AuthService {
         character: user.character,
         role: user.role || 'user',
         isPremium: user.isPremium || false,
+        isFirstLogin: user.isFirstLogin,
+        companion: user.companion,
+        avatarType: user.avatarType,
       },
     };
   }
@@ -111,6 +114,9 @@ export class AuthService {
         character: user.character,
         role: user.role || 'user',
         isPremium: user.isPremium || false,
+        isFirstLogin: user.isFirstLogin,
+        companion: user.companion,
+        avatarType: user.avatarType,
       },
     };
   }

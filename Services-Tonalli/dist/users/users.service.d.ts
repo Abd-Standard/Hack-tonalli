@@ -10,6 +10,7 @@ export declare class UsersService {
     update(id: string, data: Partial<User>): Promise<User>;
     addXP(userId: string, xp: number): Promise<User>;
     updateStreak(userId: string): Promise<User>;
+    setupUser(userId: string, companion: string, avatarType: string): Promise<User>;
     getProfile(userId: string): Promise<any>;
     getRankings(): Promise<any[]>;
 }

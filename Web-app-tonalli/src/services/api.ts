@@ -53,6 +53,9 @@ function normalizeUser(u: any) {
     nftCertificates: u.nftCertificates || [],
     role: (u.role as 'admin' | 'user') || 'user',
     isPremium: u.isPremium || false,
+    isFirstLogin: u.isFirstLogin ?? true,
+    companion: u.companion || null,
+    avatarType: u.avatarType || null,
   };
 }
 
@@ -231,6 +234,16 @@ export const apiService = {
 
   verifyCertificate: async (vcId: string) => {
     const res = await api.get(`/certificates/verify?vcId=${encodeURIComponent(vcId)}`);
+    return res.data;
+  },
+
+  setupUser: async (companion: string, avatarType: string) => {
+    const res = await api.patch('/users/me/setup', { companion, avatarType });
+    return res.data;
+  },
+
+  upgradeToPremium: async () => {
+    const res = await api.patch('/users/me/upgrade');
     return res.data;
   },
 

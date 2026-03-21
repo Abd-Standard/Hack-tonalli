@@ -33,6 +33,9 @@ let User = class User {
     subscriptionExpiry;
     dateOfBirth;
     character;
+    isFirstLogin;
+    companion;
+    avatarType;
     progress;
     certificates;
     streaks;
@@ -112,6 +115,18 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "character", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: true }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isFirstLogin", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "companion", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "avatarType", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => progress_entity_1.Progress, (progress) => progress.user),
     __metadata("design:type", Array)

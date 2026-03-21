@@ -18,7 +18,7 @@ interface Props {
 
 export function ChapterQuiz({
   moduleId, type, lives, lockedUntil, completed, bestScore,
-  isPremium, chapterId, chapterTitle, onComplete,
+  isPremium, chapterId: _chapterId, chapterTitle: _chapterTitle, onComplete,
 }: Props) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQ, setCurrentQ] = useState(0);

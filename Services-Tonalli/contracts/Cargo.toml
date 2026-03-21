@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "nft-certificate",
     "learn-to-earn",
+    "podio-nft",
 ]
 
 [workspace.dependencies]

@@ -28,6 +28,9 @@ let UsersController = class UsersController {
         const updated = await this.usersService.update(req.user.id, body);
         return this.usersService.getProfile(updated.id);
     }
+    async setupUser(req, body) {
+        return this.usersService.setupUser(req.user.id, body.companion, body.avatarType);
+    }
     async getRankings() {
         return this.usersService.getRankings();
     }
@@ -50,6 +53,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Patch)('users/me/setup'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "setupUser", null);
 __decorate([
     (0, common_1.Get)('rankings'),
     __metadata("design:type", Function),

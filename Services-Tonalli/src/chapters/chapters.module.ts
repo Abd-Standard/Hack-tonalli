@@ -6,9 +6,13 @@ import { ChapterProgress } from './entities/chapter-progress.entity';
 import { ChaptersService } from './chapters.service';
 import { ChaptersController } from './chapters.controller';
 import { User } from '../users/entities/user.entity';
+import { StellarModule } from '../stellar/stellar.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Chapter, ChapterModule, ChapterProgress, User])],
+  imports: [
+    TypeOrmModule.forFeature([Chapter, ChapterModule, ChapterProgress, User]),
+    StellarModule,
+  ],
   controllers: [ChaptersController],
   providers: [ChaptersService],
   exports: [ChaptersService],

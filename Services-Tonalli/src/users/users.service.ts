@@ -64,6 +64,15 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
+  async setupUser(userId: string, companion: string, avatarType: string): Promise<User> {
+    await this.userRepository.update(userId, {
+      companion,
+      avatarType,
+      isFirstLogin: false,
+    });
+    return this.findById(userId);
+  }
+
   async getProfile(userId: string): Promise<any> {
     const user = await this.findById(userId);
     return {
@@ -80,6 +89,9 @@ export class UsersService {
       character: user.character,
       isPremium: user.isPremium || false,
       subscriptionExpiry: user.subscriptionExpiry,
+      isFirstLogin: user.isFirstLogin,
+      companion: user.companion,
+      avatarType: user.avatarType,
       createdAt: user.createdAt,
     };
   }
